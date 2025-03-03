@@ -5,14 +5,17 @@ import matplotlib.pyplot as plt
 import os
 path = os.path.join(os.path.dirname(__file__), "data")
 
-# fix mistake review_id to order_id is 1 to many
+# fix mistake review_id to order_id is 1 to many, product_length in products is written correctly, the others are not
 
 # this should be able to work without names= but somehow doesnt
-customers = pd.read_csv(os.path.join(path, "olist_customers_dataset.csv"), header=1, names=['customer_id', 'customer_unique_id', 'customer_zip_code_prefix', 'customer_city', 'customer_state'])
-orders = pd.read_csv(os.path.join(path, "olist_orders_dataset.csv"), header=1, names=["order_id", "customer_id", "order_status", "order_purchase_timestamp", "order_approved_at", "order_delivered_carrier_date", "order_delivered_customer_date", "order_estimated_delivery_date"])
+customers = pd.read_csv(os.path.join(path, "olist_customers_dataset.csv"), header=1, names=["customer_id", "customer_unique_id", "customer_zip_code_prefix", "customer_city", "customer_state"])
+geolocation = pd.read_csv(os.path.join(path, "olist_geolocation_dataset.csv"), header=1, names=["geolocation_zip_code_prefix", "geolocation_lat", "geolocation_lng", "geolocation_city", "geolocation_state"])
 order_items = pd.read_csv(os.path.join(path, "olist_order_items_dataset.csv"), header=1, names=["order_id", "order_item_id", "product_id", "seller_id", "shipping_limit_date", "price","freight_value"])
-products = pd.read_csv(os.path.join(path, "olist_products_dataset.csv"), header=1, names=["product_id", "product_category_name", "product_name_lenght", "product_description_lenght", "product_photos_qty", "product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm"])
+order_payments = pd.read_csv(os.path.join(path, "olist_order_payments_dataset.csv"), header=1, names=["order_id", "payment_sequential", "payment_type", "payment_installments", "payment_value"])
 order_reviews = pd.read_csv(os.path.join(path, "olist_order_reviews_dataset.csv"), header=1, names=["review_id","order_id", "review_score", "review_comment_title", "review_comment_message", "review_creation_date", "review_answer_timestamp"])
+orders = pd.read_csv(os.path.join(path, "olist_orders_dataset.csv"), header=1, names=["order_id", "customer_id", "order_status", "order_purchase_timestamp", "order_approved_at", "order_delivered_carrier_date", "order_delivered_customer_date", "order_estimated_delivery_date"])
+products = pd.read_csv(os.path.join(path, "olist_products_dataset.csv"), header=1, names=["product_id", "product_category_name", "product_name_lenght", "product_description_lenght", "product_photos_qty", "product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm"])
+sellers = pd.read_csv(os.path.join(path, "olist_sellers_dataset.csv"), header=1, names=["seller_id", "seller_zip_code_prefix", "seller_city", "seller_state"])
 translation = pd.read_csv(os.path.join(path, "product_category_name_translation.csv"), header=1, names=["product_category_name", "product_category_name_english"])
 
 """ count how many people have order once or multiple times 
@@ -105,20 +108,33 @@ i dont know what to do with this information tbh"""
 
 # plt.show()
 
+path2 = os.path.join(os.path.dirname(__file__), "new_data")
+
 """ connect customer_id to product_category """
-customers_orders = pd.merge(customers, orders, on='customer_id', how='inner')
-orders_order_items = pd.merge(customers_orders, order_items, on='order_id', how='inner')
-order_items_products = pd.merge(orders_order_items, products, on='product_id', how='inner')
-customer_product_category = pd.merge(order_items_products, translation, on='product_category_name', how='left')
-# customer_product_category.to_csv(os.path.join(path, "customer_to_product_category.csv"), index=False)
+# customers_orders = pd.merge(customers, orders, on='customer_id', how='inner')
+# orders_order_items = pd.merge(customers_orders, order_items, on='order_id', how='inner')
+# order_items_products = pd.merge(orders_order_items, products, on='product_id', how='inner')
+# customer_product_category = pd.merge(order_items_products, translation, on='product_category_name', how='left')
+# customer_product_category.to_csv(os.path.join(path2, "customer_to_product_category.csv"), index=False)
 
 """ connect product_category to review_score 
 not sure if this is possible as reviews are only linked with order """
-product_category_review = pd.merge(customer_product_category, order_reviews[['order_id', 'review_score']], on='order_id', how='left')
-# product_category_review.to_csv(os.path.join(path, "customer_product_category_with_review.csv"), index=False)
+# product_category_review = pd.merge(customer_product_category, order_reviews[['order_id', 'review_score']], on='order_id', how='left')
+# product_category_review.to_csv(os.path.join(path2, "customer_product_category_with_review.csv"), index=False)
 
 """ connect review_score to seller_id 
 did not connect sellers dataset yet"""
-products_reviews = pd.merge(order_items_products, order_reviews[['order_id', 'review_score']], on='order_id', how='left')
-review_seller = pd.merge(products_reviews, order_items[['order_id', 'seller_id']], on='order_id', how='left')
-# final_df.to_csv(os.path.join(path, "review_score_with_seller.csv"), index=False)
+# products_reviews = pd.merge(order_items_products, order_reviews[['order_id', 'review_score']], on='order_id', how='left')
+# review_seller = pd.merge(products_reviews, order_items[['order_id', 'seller_id']], on='order_id', how='left')
+# final_df.to_csv(os.path.join(path2, "review_score_with_seller.csv"), index=False)
+
+""" connect geolocation to orders to see how long an order takes to arrive based on location """
+orders["order_purchase_timestamp"] = pd.to_datetime(orders["order_purchase_timestamp"], errors='coerce')
+orders["order_delivered_customer_date"] = pd.to_datetime(orders["order_delivered_customer_date"], errors='coerce')
+orders_customers = orders.merge(customers, on="customer_id", how="left")
+orders_geo = orders_customers.merge(geolocation, left_on="customer_zip_code_prefix", right_on="geolocation_zip_code_prefix", how="left")
+orders_geo["delivery_time_days"] = (orders_geo["order_delivered_customer_date"] - orders_geo["order_purchase_timestamp"]).dt.days
+
+delivery_by_location = orders_geo.groupby(["geolocation_lat", "geolocation_lng"])["delivery_time_days"].mean().reset_index()
+delivery_by_location.to_csv(os.path.join(path2, "delivery_time_by_location.csv"), index=False)
+
