@@ -46,9 +46,25 @@ review_score = df_data.groupby(['week', 'product_category_name_english'])['revie
 
 shipping_time = df_data.groupby(['week', 'product_category_name_english'])['shipping_time'].mean().unstack(fill_value=0)
 
+# rename all columns
+item.columns = [col + "_items" for col in item.columns]
+price.columns = [col + "_price" for col in price.columns]
+freight_value.columns = [col + "_freight" for col in freight_value.columns]
+review_score.columns = [col + "_review" for col in review_score.columns]
+shipping_time.columns = [col + "_shipping" for col in shipping_time.columns]
 
-# # Convert week to datetime
-# sales_per_week["week"] = sales_per_week["week"].dt.start_time
+# turn week into a columns
+item = item.reset_index()
+price = price.reset_index()
+freight_value = freight_value.reset_index()
+review_score = review_score.reset_index()
+shipping_time = shipping_time.reset_index()
 
-# # Sort by date
-# sales_per_week = sales_per_week.sort_values("week")
+# Merging all dataframes on 'week'
+findal_df = (
+    item
+    .merge(price, on="week", how="left")
+    .merge(freight_value, on="week", how="left")
+    .merge(review_score, on="week", how="left")
+    .merge(shipping_time, on="week", how="left")
+)
