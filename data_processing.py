@@ -68,3 +68,5 @@ findal_df = (
     .merge(review_score, on="week", how="left")
     .merge(shipping_time, on="week", how="left")
 )
+
+print(findal_df.head(30))
