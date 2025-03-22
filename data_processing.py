@@ -61,10 +61,11 @@ review_score = review_score.reset_index()
 shipping_time = shipping_time.reset_index()
 
 # Merging all dataframes on 'week'
-findal_df = (
+final_df = (
     item
     .merge(price, on="week", how="left")
     .merge(freight_value, on="week", how="left")
     .merge(review_score, on="week", how="left")
     .merge(shipping_time, on="week", how="left")
 )
+final_df.to_csv('data/df_inputs.csv', index=False)
