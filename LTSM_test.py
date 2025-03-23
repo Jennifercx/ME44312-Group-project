@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-# from tensorflow.keras.layers import LSTM, Dense, Dropout
-# from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
