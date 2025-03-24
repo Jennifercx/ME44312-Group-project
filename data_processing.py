@@ -3,18 +3,19 @@ import pandas as pd
 import os
 
 # data directory
-data_dir = os.getcwd()+"\\data\\"
+data_dir = os.path.join(os.getcwd(), "data")
+processed_data_dir = os.path.join(data_dir, "processed_data")
 
 # import dataframes seperately
-df_customer = pd.read_csv(data_dir+"olist_customers_dataset.csv")
-df_geolocation = pd.read_csv(data_dir+"olist_geolocation_dataset.csv")
-df_order_items = pd.read_csv(data_dir+"olist_order_items_dataset.csv")
-df_payments = pd.read_csv(data_dir+"olist_order_payments_dataset.csv")
-df_reviews = pd.read_csv(data_dir+"olist_order_reviews_dataset.csv")
-df_orders = pd.read_csv(data_dir+"olist_orders_dataset.csv")
-df_products = pd.read_csv(data_dir+"olist_products_dataset.csv")
-df_sellers = pd.read_csv(data_dir+"olist_sellers_dataset.csv")
-df_product_category_name = pd.read_csv(data_dir+"product_category_name_translation.csv")
+df_customer = pd.read_csv(os.path.join(data_dir, "olist_customers_dataset.csv"))
+df_geolocation = pd.read_csv(os.path.join(data_dir, "olist_geolocation_dataset.csv"))
+df_order_items = pd.read_csv(os.path.join(data_dir, "olist_order_items_dataset.csv"))
+df_payments = pd.read_csv(os.path.join(data_dir, "olist_order_payments_dataset.csv"))
+df_reviews = pd.read_csv(os.path.join(data_dir, "olist_order_reviews_dataset.csv"))
+df_orders = pd.read_csv(os.path.join(data_dir, "olist_orders_dataset.csv"))
+df_products = pd.read_csv(os.path.join(data_dir, "olist_products_dataset.csv"))
+df_sellers = pd.read_csv(os.path.join(data_dir, "olist_sellers_dataset.csv"))
+df_product_category_name = pd.read_csv(os.path.join(data_dir, "product_category_name_translation.csv"))
 
 # combine all datasets and save to .csv file
 df_all = df_customer.merge(df_orders, on='customer_id', how='left').merge(df_reviews, on='order_id', how='left').merge(df_payments, on='order_id', how='left').merge(df_order_items, on='order_id', how='left').merge(df_sellers, on='seller_id', how='left').merge(df_products, on='product_id', how='left').merge(df_product_category_name, on='product_category_name', how='left')
@@ -22,7 +23,118 @@ df_shipping_time = pd.DataFrame((pd.to_datetime(df_orders["order_delivered_custo
 df_all["shipping_time"] = pd.DataFrame((pd.to_datetime(df_orders["order_delivered_customer_date"]) -pd.to_datetime(df_orders["order_purchase_timestamp"])).dt.total_seconds()/(24*3600))
 df_all.to_csv('data/merged_data.csv', index=False)
 
+############################################################################################################################################################################################
+# --- Data Cleaning -------------------------------------------------------------------------------------------------------
+############################################################################################################################################################################################
+
+# drop rows with missing values in product_category_name_english
+df_all = df_all.dropna(subset=['product_category_name_english'])
+
+# Filter out data from 2016 because highly discontinuous
+df_all = df_all[pd.to_datetime(df_all["order_purchase_timestamp"]).dt.year > 2016]
+
+df_all = df_all[df_all["order_status"] == "delivered"]
+# map categories to more general categories -----------------------------------------------------------------------------------------------------------------------------------------------
+
+category_mapping = {
+
+    # Home & Furniture
+    
+    'furniture_decor': 'furniture',
+    'furniture_living_room': 'furniture',
+    'furniture_bedroom': 'furniture',
+    'furniture_mattress_and_upholstery': 'furniture',
+    'kitchen_dining_laundry_garden_furniture': 'furniture',
+    'bed_bath_table': 'furniture',
+    
+    # Construction & Tools
+    'costruction_tools_tools': 'construction_tools',
+    'costruction_tools_garden': 'construction_tools',
+    'construction_tools_lights': 'construction_tools',
+    'construction_tools_construction': 'construction_tools',
+    'construction_tools_safety': 'construction_tools',
+    'home_construction': 'construction_tools',
+
+    # Home Appliances
+    'home_appliances_2': 'home_appliances',
+    'small_appliances': 'home_appliances',
+    'small_appliances_home_oven_and_coffee': 'home_appliances',
+    'air_conditioning': 'home_appliances',
+    'home_confort': 'home_appliances',
+    'home_comfort_2': 'home_appliances',
+
+    # Fashion
+    'fashio_female_clothing': 'fashion',
+    'fashion_male_clothing': 'fashion',
+    'fashion_childrens_clothes': 'fashion',
+    'fashion_shoes': 'fashion',
+    'fashion_bags_accessories': 'fashion',
+    'fashion_underwear_beach': 'fashion',
+    'fashion_sport': 'fashion',
+
+    # Electronics & Tech
+    'electronics': 'electronics',
+    'tablets_printing_image': 'electronics',
+    'computers': 'electronics',
+    'electronics_accessories': 'electronics',
+    'computers_accessories': 'electronics',
+    'audio': 'electronics',
+    'telephony': 'telephony',
+    'fixed_telephony': 'telephony',
+
+    # Books & Entertainment
+    'books_general_interest': 'entertainment',
+    'books_imported': 'entertainment',
+    'books_technical': 'entertainment',
+    'cds_dvds_musicals': 'entertainment',
+    'dvds_blu_ray': 'entertainment',
+    'cine_photo': 'entertainment',
+    'consoles_games': 'entertainment',
+    'arts_and_craftmanship': 'entertainment',
+    'art': 'entertainment',
+    'music': 'entertainment',
+    'musical_instruments': 'entertainment',
+    
+    # Automotive
+    'auto': 'automotive',
+
+    # Beauty & Health
+    'health_beauty': 'beauty_health',
+    'perfumery': 'beauty_health',
+    'diapers_and_hygiene': 'beauty_health',
+
+    # Food & Beverages
+    'food_drink': 'food',
+    'food': 'food',
+    'drinks': 'food',
+    'la_cuisine': 'food',
+
+    # Miscellaneous
+    'market_place': 'other',
+    'cool_stuff': 'other',
+    'security_and_services': 'other',
+    'signaling_and_security': 'other',
+    'party_supplies': 'other',
+    'christmas_supplies': 'other',
+    'watches_gifts': 'gifts',
+    'flowers': 'gifts',
+    'pet_shop': 'pets',
+    'baby': 'baby',
+    'sports_leisure': 'sports',
+    'toys': 'toys',
+    'stationery': 'office_supplies',
+    'office_furniture': 'office_supplies',
+    'luggage_accessories': 'luggage',
+    'industry_commerce_and_business': 'other',
+    'agro_industry_and_commerce': 'other',
+}
+
+df_all['product_category_name_english'] = df_all['product_category_name_english'].replace(category_mapping)
+
+
+############################################################################################################################################################################################
 # --- create weekly dataset -------------------------------------------------------------------------------------------------------
+############################################################################################################################################################################################
 
 # select relevant columns only
 df_data = df_all[["order_purchase_timestamp", "review_score", "price", "freight_value", "shipping_time", "product_category_name_english"]]
@@ -42,7 +154,8 @@ freight_value = df_data.groupby(['week', 'product_category_name_english'])['frei
 total_freight_value = df_data.groupby('week')['price'].sum()
 freight_value = freight_value.div(total_freight_value, axis=0)
 
-review_score = df_data.groupby(['week', 'product_category_name_english'])['review_score'].mean().unstack(fill_value=0)
+overall_avg = df_data['review_score'].mean() # overall average review score for filling missing values
+review_score = df_data.groupby(['week', 'product_category_name_english'])['review_score'].mean().unstack(fill_value=overall_avg)
 
 shipping_time = df_data.groupby(['week', 'product_category_name_english'])['shipping_time'].mean().unstack(fill_value=0)
 
@@ -68,4 +181,25 @@ final_df = (
     .merge(review_score, on="week", how="left")
     .merge(shipping_time, on="week", how="left")
 )
-final_df.to_csv('data/df_inputs.csv', index=False)
+# add month and week of month columns
+final_df['week'] = final_df['week'].astype(str)  # Convert to string
+final_df['start_date'] = final_df['week'].str.split('/').str[0]  # Extract start date
+final_df['start_date'] = pd.to_datetime(final_df['start_date'])  # Convert to datetime
+final_df['month_of_year'] = final_df['start_date'].dt.month  # Month of year (1-12)
+final_df['week_of_month'] = final_df['start_date'].apply(lambda x: (x.day - 1) // 7 + 1)  # Week of month (1-5)
+final_df.drop(columns=['start_date'], inplace=True)  # Remove temporary column
+
+cols = ['week', 'month_of_year', 'week_of_month'] + [col for col in final_df.columns if col not in ['week', 'month_of_year', 'week_of_month']]
+final_df = final_df[cols]
+
+# take the last 17 weeks as test data and the rest as training data (approximately 80% training and 20% test)
+weeks = final_df['week'].unique()
+train_weeks = weeks[:-17]
+test_weeks = weeks[-17:]
+train_df = final_df[final_df['week'].isin(train_weeks)]
+test_df = final_df[final_df['week'].isin(test_weeks)]
+
+
+final_df.to_csv(os.path.join(processed_data_dir, "processed_dataset.csv"), index=False)
+train_df.to_csv(os.path.join(processed_data_dir, "train_data.csv"), index=False)
+test_df.to_csv(os.path.join(processed_data_dir, "test_data.csv"), index=False)
