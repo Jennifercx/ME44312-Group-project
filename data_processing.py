@@ -1,7 +1,8 @@
 # --- import packages -------------------------------------------------------------------------------------------------
 import pandas as pd
 import os
-
+import plotly.express as px
+import numpy as np
 # data directory
 data_dir = os.path.join(os.getcwd(), "data")
 processed_data_dir = os.path.join(data_dir, "processed_data")
@@ -26,14 +27,73 @@ df_all.to_csv('data/merged_data.csv', index=False)
 ############################################################################################################################################################################################
 # --- Data Cleaning -------------------------------------------------------------------------------------------------------
 ############################################################################################################################################################################################
+visualise = False # Set to True to visualise the cleaning process
 
-# drop rows with missing values in product_category_name_english
-df_all = df_all.dropna(subset=['product_category_name_english'])
+# Create a copy of the original dataframe before cleaning
+df_orig = df_all.copy()
 
-# Filter out data from 2016 because highly discontinuous
-df_all = df_all[pd.to_datetime(df_all["order_purchase_timestamp"]).dt.year > 2016]
+# Generate a mask for rows that satisfy all conditions:
+clean_mask = (
+    df_orig['product_category_name_english'].notna() & # drop rows with missing values in product_category_name_english
+    (pd.to_datetime(df_orig["order_purchase_timestamp"]).dt.year > 2016) & # Filter out data from 2016 because highly discontinuous
+    (df_orig["order_status"] == "delivered") & # Filter out orders that are not delivered
+    (pd.to_datetime(df_orig["order_purchase_timestamp"]).dt.date < pd.to_datetime("2018-08-27").date())
+)
 
-df_all = df_all[df_all["order_status"] == "delivered"]
+# Save removed rows
+df_trash = df_orig[~clean_mask]
+
+# Apply the cleaning
+df_all = df_orig[clean_mask]
+
+# --- Visualisation to analyse the cleaning process -------------------------------------------------------------------------------------------------------
+if visualise:
+    # Convert timestamps to datetime objects
+    sales_clean = (
+        df_all.groupby(pd.to_datetime(df_all['order_purchase_timestamp']).dt.date)
+            .size()
+            .reset_index(name='count')
+    )
+    sales_clean.columns = ['order_date', 'count']
+    sales_clean['type'] = 'Cleaned Sales'
+
+    sales_trash = (
+        df_trash.groupby(pd.to_datetime(df_trash['order_purchase_timestamp']).dt.date)
+            .size()
+            .reset_index(name='count')
+    )
+    sales_trash.columns = ['order_date', 'count']
+    sales_trash['type'] = 'Removed Sales'
+    # Combine the two datasets
+    sales_df = pd.concat([sales_clean, sales_trash], ignore_index=True)
+    # Convert order_date back to datetime for Plotly's x-axis
+    sales_df['order_date'] = pd.to_datetime(sales_df['order_date'])
+    # Create an interactive grouped bar chart with green and red bars
+    fig = px.bar(
+        sales_df,
+        x='order_date',
+        y='count',
+        color='type',
+        barmode='group',
+        custom_data=['order_date', 'type'],  # Pass order_date and type for custom hover text
+        hover_data={'count': True},           # Only include count from the data
+        labels={'order_date': 'Date', 'count': 'Number of Sales'},
+        title='Daily Sales: Cleaned vs Removed Data',
+        color_discrete_map={'Cleaned Sales': 'green', 'Removed Sales': 'red'}
+    )
+    # Update hovertemplate to include the day of the week (formatted via strftime)
+    fig.update_traces(
+        hovertemplate=
+        'Date: %{customdata[0]|%a, %Y-%m-%d}<br>' +
+        'Count: %{y}<br>' +
+        'Type: %{customdata[1]}'
+    )
+    # Update x-axis so dates include day-of-week (e.g., "Mon, 2025-03-25")
+    fig.update_xaxes(tickformat="%a, %Y-%m-%d", tickangle=-45)
+    # Set both the paper and plot backgrounds to white
+    fig.update_layout(paper_bgcolor='#212121',plot_bgcolor='#262626',  font=dict(color='white'),title_font=dict(color='white'))
+    fig.update_traces(marker_line_width=0)
+    fig.show()
 # map categories to more general categories -----------------------------------------------------------------------------------------------------------------------------------------------
 
 category_mapping = {
@@ -187,14 +247,18 @@ final_df['start_date'] = final_df['week'].str.split('/').str[0]  # Extract start
 final_df['start_date'] = pd.to_datetime(final_df['start_date'])  # Convert to datetime
 final_df['month_of_year'] = final_df['start_date'].dt.month  # Month of year (1-12)
 final_df['week_of_month'] = final_df['start_date'].apply(lambda x: (x.day - 1) // 7 + 1)  # Week of month (1-5)
-final_df.drop(columns=['start_date'], inplace=True)  # Remove temporary column
+final_df.drop(columns=['start_date'], inplace=True) 
 
 cols = ['week', 'month_of_year', 'week_of_month'] + [col for col in final_df.columns if col not in ['week', 'month_of_year', 'week_of_month']]
 final_df = final_df[cols]
 
+############################################################################################################################################################################################
+# --- split data into training and test data -------------------------------------------------------------------------------------------------------
+############################################################################################################################################################################################
+
 # take the last 17 weeks as test data and the rest as training data (approximately 80% training and 20% test)
 weeks = final_df['week'].unique()
-train_weeks = weeks[:-17]
+train_weeks = weeks[:-17] # 69 weeks
 test_weeks = weeks[-17:]
 train_df = final_df[final_df['week'].isin(train_weeks)]
 test_df = final_df[final_df['week'].isin(test_weeks)]
@@ -203,3 +267,46 @@ test_df = final_df[final_df['week'].isin(test_weeks)]
 final_df.to_csv(os.path.join(processed_data_dir, "processed_dataset.csv"), index=False)
 train_df.to_csv(os.path.join(processed_data_dir, "train_data.csv"), index=False)
 test_df.to_csv(os.path.join(processed_data_dir, "test_data.csv"), index=False)
+
+# --- create input and target vectors for time series forecasting -------------------------------------------------------------------------------------------------------
+def create_input_target_vectors(df, time_span):
+    """
+    Creates input and target vectors for time series forecasting while keeping the week structure.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame containing weekly data.
+        time_span (int): The number of weeks to use as input for each prediction.
+
+    Returns:
+        tuple: A tuple containing the input vector (X) and the target vector (y).
+    """
+    X = []
+    y = []
+    price_cols = [col for col in df.columns if 'price' in col]
+    for i in range(len(df) - time_span ):
+        X.append(df.iloc[i:i + time_span].drop(columns=['week']).values)
+        y.append(df.iloc[i + time_span][price_cols].values)
+    return np.array(X), np.array(y)
+
+# Create an example database with 6 weeks and 4 columns
+data = {
+    'week': [
+        '2025-01-05/2025-01-11',
+        '2025-01-12/2025-01-18',
+        '2025-01-19/2025-01-25',
+        '2025-01-26/2025-02-01',
+        '2025-02-02/2025-02-08',
+        '2025-02-09/2025-02-15'
+    ],
+    'price': [100, 150, 130, 120, 140, 110],
+    'units_sold': [10, 15, 12, 11, 14, 13],
+    'cost': [50, 80, 65, 60, 70, 55]
+}
+
+df_example = pd.DataFrame(data)
+print(df_example)
+
+# Create input and target vectors
+X, y = create_input_target_vectors(df_example, time_span=2)
+print(X)
+print(y)
