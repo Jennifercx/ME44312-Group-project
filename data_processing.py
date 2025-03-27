@@ -204,15 +204,15 @@ df_data["week"] = pd.to_datetime(df_data['order_purchase_timestamp']).dt.to_peri
 # per week and per item type dataframes
 item = df_data.groupby(['week', 'product_category_name_english']).size().unstack(fill_value=0)
 total_items = df_data.groupby('week').size()
-item = item.div(total_items, axis=0)
+#item = item.div(total_items, axis=0)
 
 price = df_data.groupby(['week', 'product_category_name_english'])['price'].sum().unstack(fill_value=0)
 total_price = df_data.groupby('week')['price'].sum()
-price = price.div(total_price, axis=0)
+#price = price.div(total_price, axis=0)
 
 freight_value = df_data.groupby(['week', 'product_category_name_english'])['freight_value'].sum().unstack(fill_value=0)
 total_freight_value = df_data.groupby('week')['price'].sum()
-freight_value = freight_value.div(total_freight_value, axis=0)
+#freight_value = freight_value.div(total_freight_value, axis=0)
 
 overall_avg = df_data['review_score'].mean() # overall average review score for filling missing values
 review_score = df_data.groupby(['week', 'product_category_name_english'])['review_score'].mean().unstack(fill_value=overall_avg)
@@ -288,25 +288,8 @@ def create_input_target_vectors(df, time_span):
         y.append(df.iloc[i + time_span][price_cols].values)
     return np.array(X), np.array(y)
 
-# Create an example database with 6 weeks and 4 columns
-data = {
-    'week': [
-        '2025-01-05/2025-01-11',
-        '2025-01-12/2025-01-18',
-        '2025-01-19/2025-01-25',
-        '2025-01-26/2025-02-01',
-        '2025-02-02/2025-02-08',
-        '2025-02-09/2025-02-15'
-    ],
-    'price': [100, 150, 130, 120, 140, 110],
-    'units_sold': [10, 15, 12, 11, 14, 13],
-    'cost': [50, 80, 65, 60, 70, 55]
-}
-
-df_example = pd.DataFrame(data)
-print(df_example)
 
 # Create input and target vectors
-X, y = create_input_target_vectors(df_example, time_span=2)
-print(X)
-print(y)
+X, y = create_input_target_vectors(train_df, time_span=2)
+print(X.shape)  # Shape: (number of samples, time_span, number of features)
+print(y.shape)  # Shape: (number of samples, number of features)
