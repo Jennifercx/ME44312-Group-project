@@ -8,62 +8,58 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import os
+from data_processing import create_input_target_vectors
 
-data_dir = os.getcwd()+"\\data\\"
-# 1. Load datasets
-df_orders = pd.read_csv(data_dir+"olist_orders_dataset.csv", parse_dates=["order_purchase_timestamp"])
-df_order_items = pd.read_csv(data_dir+"olist_order_items_dataset.csv")
+# 1. Load the data
 
-# Merge order items with orders
-df = df_orders.merge(df_order_items, on="order_id")
+data_dir = os.path.join(os.getcwd(), "data")
+processed_data_dir = os.path.join(data_dir, "processed_data")
 
-# Aggregate sales per week
-df["week"] = df["order_purchase_timestamp"].dt.to_period("W")
-sales_per_week = df.groupby("week")["price"].sum().reset_index()
+train_set = pd.read_csv(os.path.join(processed_data_dir, "train_data.csv"))
 
-# Convert week to datetime
-sales_per_week["week"] = sales_per_week["week"].dt.start_time
+# 2. Create input and target vectors
+time_steps = 2  # Number of time steps (weeks) to look back
+X, y = create_input_target_vectors(train_set, time_steps)  # Adjust time_steps as needed
 
-# Sort by date
-sales_per_week = sales_per_week.sort_values("week")
-
-# 2. Prepare features with lagged variables
-def create_lagged_features(data, lags=1):
-    """Creates lag features for time series forecasting."""
-    df = data.copy()
-    for i in range(1, lags+1):
-        df[f"lag_{i}"] = df["price"].shift(i)
-    df.dropna(inplace=True)  # Remove NaN values
-    return df
-
-data = create_lagged_features(sales_per_week)
-
-# Split features and target
-X = data.drop(columns=["week", "price"])
-y = data["price"].values.reshape(-1, 1)  # Ensure y is a 2D array
+# Split data into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, shuffle=False)
 
 # 3. Normalize features and target
+S, T, F = len(X_train), time_steps, 102  # 1000 samples, 10 weeks, 102 features
+
+# Step 1: Reshape to 2D (flatten time steps)
+X_train_reshaped = X_train.reshape(-1, F)  # Shape (S*T, 102)
+X_val_reshaped = X_val.reshape(-1, F)      # Shape (S_val*T, 102)
+
+# Step 2: Fit the scaler on training data only
 scaler_X = MinMaxScaler()
-X_scaled = scaler_X.fit_transform(X)
-
+scaler_X.fit(X_train_reshaped)
 scaler_y = MinMaxScaler()
-y_scaled = scaler_y.fit_transform(y)
+scaler_y.fit(y_train) 
 
-# Split dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_scaled, test_size=0.2, shuffle=False)
+# Step 3: Transform both train and validation sets
+X_train_scaled = scaler_X.transform(X_train_reshaped)
+X_val_scaled = scaler_X.transform(X_val_reshaped)
+
+# Step 4: Reshape back to original 3D shape
+X_train_scaled = X_train_scaled.reshape(S, T, F)
+X_val_scaled = X_val_scaled.reshape(X_val.shape[0], T, F)
+
+y_train_scaled = scaler_y.transform(y_train)  
+y_val_scaled = scaler_y.transform(y_val) 
 
 # Reshape X for LSTM (3D array)
-X_train_reshaped = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
-X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
+#X_train_reshaped = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+#X_test_reshaped = X_test.reshape((X_test.shape[0], X_test.shape[1], 1))
 
 # 4. Build LSTM Model
 model = keras.Sequential([
-    LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], 1)),  # First LSTM layer
+    LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),  # First LSTM layer
     Dropout(0.2),  # Regularization
     LSTM(32),  # Second LSTM layer
     Dropout(0.2),
     Dense(16, activation="relu"),  # Hidden layer
-    Dense(1)  # Output layer
+    Dense(20)  # Output layer
 ])
 
 # Compile the model
@@ -73,18 +69,18 @@ model.compile(optimizer="adam", loss="mse", metrics=["mae"])
 early_stopping = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
 
 # 5. Train the model
-history = model.fit(X_train_reshaped, y_train, epochs=200, validation_data=(X_test_reshaped, y_test),
+history = model.fit(X_train_scaled, y_train_scaled, epochs=200, validation_data=(X_val_scaled, y_val_scaled),
                     callbacks=[early_stopping], batch_size=8, verbose=1)
 
 # 6. Evaluate the model
-loss, mae = model.evaluate(X_test_reshaped, y_test)
+loss, mae = model.evaluate(X_val_scaled, y_val_scaled)
 print(f"Test Loss: {loss:.2f}, Test MAE: {mae:.2f}")
 
 # 7. Make predictions and revert scaling
-y_pred_scaled = model.predict(X_test_reshaped)
+y_pred_scaled = model.predict(X_val_scaled)
 y_pred = scaler_y.inverse_transform(y_pred_scaled)  # Reverse transformation
 y_pred_shift = y_pred[1:]
-y_test_original = scaler_y.inverse_transform(y_test)  # Reverse transformation for actual values
+y_test_original = scaler_y.inverse_transform(y_val_scaled)  # Reverse transformation for actual values
 y_test_trimmed = y_test_original[:-1]
 print()
 
