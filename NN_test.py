@@ -6,10 +6,13 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
+import os
+
 
 # 1. Load the data
-df_orders = pd.read_csv("archive/olist_orders_dataset.csv", parse_dates=["order_purchase_timestamp"])
-df_order_items = pd.read_csv("archive/olist_order_items_dataset.csv")
+data_dir = os.getcwd()+"\\data\\"
+df_orders = pd.read_csv(data_dir+"olist_orders_dataset.csv", parse_dates=["order_purchase_timestamp"])
+df_order_items = pd.read_csv(data_dir+"olist_order_items_dataset.csv")
 
 # Merge order items with orders
 df = df_orders.merge(df_order_items, on="order_id")
