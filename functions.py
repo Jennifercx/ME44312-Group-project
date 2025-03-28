@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # --- create input and target vectors for time series forecasting -------------------------------------------------------------------------------------------------------
+
 def create_input_target_vectors(df, time_span):
     """
     Creates input and target vectors for time series forecasting while keeping the week structure.
