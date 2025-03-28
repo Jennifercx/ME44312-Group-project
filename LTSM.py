@@ -4,7 +4,7 @@ from tensorflow import keras
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 import os
-from functions import create_input_target_vectors, scale_data, predict_data
+from functions import create_input_target_vectors, scale_data, predict_data, evaluate_model
 
 # 1. Load the data
 data_dir = os.path.join(os.getcwd(), "data")
@@ -39,9 +39,5 @@ early_stopping = EarlyStopping(monitor="val_loss", patience=15, restore_best_wei
 history = model.fit(X_train_scaled, y_train_scaled, epochs=200, validation_data=(X_val_scaled, y_val_scaled),
                     callbacks=[early_stopping], batch_size=8, verbose=1)
 
-# 6. Evaluate the model
-loss, mae = model.evaluate(X_val_scaled, y_val_scaled)
-print(f"Test Loss: {loss:.2f}, Test MAE: {mae:.2f}")
-
-# 7. Make predictions and revert scaling
-y_test_trimmed, y_pred_shift = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+# 6. Predict and evaluate model
+predict_data(model, X_val_scaled, y_val_scaled, scaler_y)

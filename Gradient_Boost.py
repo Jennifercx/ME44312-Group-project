@@ -27,8 +27,5 @@ model = XGBRegressor(n_estimators=100, learning_rate=0.1, random_state=42)
 # 5. Train the models
 model.fit(X_train_scaled, y_train_scaled)
 
-# 6. Evaluate the model
-evaluate_model(model, X_val_scaled, y_val_scaled)
-
-# 7. Make predictions and revert scaling
-y_test_trimmed, y_pred_shift = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+# 6. Predict and evaluate model
+predict_data(model, X_val_scaled, y_val_scaled, scaler_y)

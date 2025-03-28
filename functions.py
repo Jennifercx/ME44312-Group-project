@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # --- create input and target vectors for time series forecasting -------------------------------------------------------------------------------------------------------
+
 def create_input_target_vectors(df, time_span):
     """
     Creates input and target vectors for time series forecasting while keeping the week structure.
@@ -56,23 +57,25 @@ def scale_data(X, y, time_steps, n_features):
 
     return X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y
 
-def evaluate_model(model, X_test, y_test):
-    y_pred = model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    print(f"Test MAE: {mae:.2f}, Test R^2: {r2:.2f}")
+def evaluate_model(y_true, y_pred):
+    mae = mean_absolute_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
+    print(f"MAE: {mae:.2f}, MSE: {mse:.2f}, R^2: {r2:.2f}")
     return 0
 
 def predict_data(model, X_test, y_test, scaler_y):
-    y_pred_scaled = model.predict(X_test)
-    y_pred = scaler_y.inverse_transform(y_pred_scaled)  # Reverse transformation
-    y_pred_shift = y_pred[1:]
-    y_test_original = scaler_y.inverse_transform(y_test)  # Reverse transformation for actual values
-    y_test_trimmed = y_test_original[:-1]
+    y_pred = scaler_y.inverse_transform(model.predict(X_test))  # Reverse transformation
+    y_pred = y_pred[:-1]                 # Shift data since we predict the next week based on the current week
+    y_true = scaler_y.inverse_transform(y_test)  # Reverse transformation for actual values
+    y_true = y_true[1:]
+
+    # evaluate model
+    evaluate_model(y_true, y_pred)
 
     plt.figure(figsize=(12, 5))
-    plt.plot(y_test_trimmed, label="Actual sales", marker="o")
-    plt.plot(y_pred_shift, label="Predicted sales", marker="x")
+    plt.plot(y_true, label="Actual sales", marker="o")
+    plt.plot(y_pred, label="Predicted sales", marker="x")
     plt.legend()
     plt.title("Predicted vs. Actual Sales")
     plt.xlabel("Time (weeks)")

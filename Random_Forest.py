@@ -28,9 +28,6 @@ model = RandomForestRegressor(n_estimators=100, random_state=42)
 # 5. Train the models
 model.fit(X_train_scaled, y_train_scaled)
 
-# 6. Evaluate the model
-evaluate_model(model, X_val_scaled, y_val_scaled)
-
 # Grid Search for Random Forest
 param_grid = {
     'n_estimators': [50, 100],
@@ -44,5 +41,5 @@ grid_search.fit(X_val_scaled, y_val_scaled)
 
 print("Best Parameters for Random Forest:", grid_search.best_params_)
 
-# 7. Make predictions and revert scaling
-y_test_trimmed, y_pred_shift = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+# 6. Predict and evaluate model
+predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
