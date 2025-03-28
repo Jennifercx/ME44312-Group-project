@@ -3,9 +3,11 @@ import pandas as pd
 import os
 import plotly.express as px
 import numpy as np
+
 # data directory
 data_dir = os.path.join(os.getcwd(), "data")
 processed_data_dir = os.path.join(data_dir, "processed_data")
+print("Current Working Directory:", os.getcwd())
 
 # import dataframes seperately
 df_customer = pd.read_csv(os.path.join(data_dir, "olist_customers_dataset.csv"))
@@ -263,33 +265,6 @@ test_weeks = weeks[-17:]
 train_df = final_df[final_df['week'].isin(train_weeks)]
 test_df = final_df[final_df['week'].isin(test_weeks)]
 
-
 final_df.to_csv(os.path.join(processed_data_dir, "processed_dataset.csv"), index=False)
 train_df.to_csv(os.path.join(processed_data_dir, "train_data.csv"), index=False)
 test_df.to_csv(os.path.join(processed_data_dir, "test_data.csv"), index=False)
-
-# --- create input and target vectors for time series forecasting -------------------------------------------------------------------------------------------------------
-def create_input_target_vectors(df, time_span):
-    """
-    Creates input and target vectors for time series forecasting while keeping the week structure.
-
-    Args:
-        df (pd.DataFrame): The input DataFrame containing weekly data.
-        time_span (int): The number of weeks to use as input for each prediction.
-
-    Returns:
-        tuple: A tuple containing the input vector (X) and the target vector (y).
-    """
-    X = []
-    y = []
-    price_cols = [col for col in df.columns if 'price' in col]
-    for i in range(len(df) - time_span ):
-        X.append(df.iloc[i:i + time_span].drop(columns=['week']).values)
-        y.append(df.iloc[i + time_span][price_cols].values)
-    return np.array(X), np.array(y)
-
-
-# Create input and target vectors
-X, y = create_input_target_vectors(train_df, time_span=2)
-print(X.shape)  # Shape: (number of samples, time_span, number of features)
-print(y.shape)  # Shape: (number of samples, number of features)
