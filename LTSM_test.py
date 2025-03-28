@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import os
 from data_processing import create_input_target_vectors
+from Testing import ModelEvaluation
 
 # 1. Load the data
 
@@ -57,20 +58,32 @@ model = keras.Sequential([
     LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),  # First LSTM layer
     Dropout(0.2),  # Regularization
     LSTM(32),  # Second LSTM layer
-    Dropout(0.2),
+    Dropout(0.2),  # Regularization
     Dense(16, activation="relu"),  # Hidden layer
     Dense(20)  # Output layer
 ])
 
 # Compile the model
-model.compile(optimizer="adam", loss="mse", metrics=["mae"])
+model.compile(optimizer="adam", loss="huber", metrics=["mae"])
 
 # Early Stopping to prevent overfitting
-early_stopping = EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor="val_loss", patience=30, restore_best_weights=True)
 
 # 5. Train the model
 history = model.fit(X_train_scaled, y_train_scaled, epochs=200, validation_data=(X_val_scaled, y_val_scaled),
                     callbacks=[early_stopping], batch_size=8, verbose=1)
+
+# Get the loss values from the history object
+train_loss = history.history['loss']
+val_loss = history.history['val_loss']
+
+# Plotting
+plt.plot(train_loss, label='Training Loss')
+plt.plot(val_loss, label='Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.title('Training vs Validation Loss')
 
 # 6. Evaluate the model
 loss, mae = model.evaluate(X_val_scaled, y_val_scaled)
@@ -80,7 +93,7 @@ print(f"Test Loss: {loss:.2f}, Test MAE: {mae:.2f}")
 y_pred_scaled = model.predict(X_val_scaled)
 y_pred = scaler_y.inverse_transform(y_pred_scaled)  # Reverse transformation
 y_pred_shift = y_pred[1:]
-y_test_original = scaler_y.inverse_transform(y_val_scaled)  # Reverse transformation for actual values
+y_test_original = scaler_y.inverse_transform(y_val_scaled)  # Reverse transformation for actual values 
 y_test_trimmed = y_test_original[:-1]
 print()
 
@@ -94,8 +107,8 @@ plt.xlabel("Time (weeks)")
 plt.ylabel("Sales Price")
 plt.show()
 
-# 9. Predict sales for next week
-latest_features = X_scaled[-1].reshape(1, X_train.shape[1], 1)  # Use the latest available data
-next_week_prediction_scaled = model.predict(latest_features)
-next_week_prediction = scaler_y.inverse_transform(next_week_prediction_scaled)  # Convert back to original scale
-print(f"Expected sales for next week: {next_week_prediction[0][0]:.2f}")
+LSTMev = ModelEvaluation(y_test_trimmed, y_pred_shift, name="LSTM")
+categories = ["automotive", "baby", "beauty_health", "construction_tools", "electronics", "entertainment", "fashion", "food", "furniture", "garden_tools", "gifts", "home_appliances", "housewares", "luggage", "office_supplies", "other", "pets", "sports", "telephony", "toys"]
+LSTMev.set_categories(categories)
+LSTMev.plot_categories()
+print(LSTMev.EvaluateResults())
