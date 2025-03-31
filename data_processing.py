@@ -110,20 +110,23 @@ category_mapping = {
     'bed_bath_table': 'furniture',
     
     # Construction & Tools
-    'costruction_tools_tools': 'construction_tools',
-    'costruction_tools_garden': 'construction_tools',
-    'construction_tools_lights': 'construction_tools',
-    'construction_tools_construction': 'construction_tools',
-    'construction_tools_safety': 'construction_tools',
-    'home_construction': 'construction_tools',
+    'costruction_tools_tools': 'tools',
+    'costruction_tools_garden': 'tools',
+    'construction_tools_lights': 'tools',
+    'construction_tools_construction': 'tools',
+    'construction_tools_safety': 'tools',
+    'home_construction': 'tools',
+    'garden_tools': 'tools',
 
-    # Home Appliances
-    'home_appliances_2': 'home_appliances',
-    'small_appliances': 'home_appliances',
-    'small_appliances_home_oven_and_coffee': 'home_appliances',
-    'air_conditioning': 'home_appliances',
-    'home_confort': 'home_appliances',
-    'home_comfort_2': 'home_appliances',
+    # Home
+    'home_appliances_2': 'home',
+    'small_appliances': 'home',
+    'small_appliances_home_oven_and_coffee': 'home',
+    'air_conditioning': 'home',
+    'home_confort': 'home',
+    'home_comfort_2': 'home',
+    'home_appliances': 'home',
+    'housewares': 'home',
 
     # Fashion
     'fashio_female_clothing': 'fashion',
@@ -133,6 +136,7 @@ category_mapping = {
     'fashion_bags_accessories': 'fashion',
     'fashion_underwear_beach': 'fashion',
     'fashion_sport': 'fashion',
+     'luggage_accessories': 'fashion',
 
     # Electronics & Tech
     'electronics': 'electronics',
@@ -141,8 +145,8 @@ category_mapping = {
     'electronics_accessories': 'electronics',
     'computers_accessories': 'electronics',
     'audio': 'electronics',
-    'telephony': 'telephony',
-    'fixed_telephony': 'telephony',
+    'telephony': 'electronics',
+    'fixed_telephony': 'electronics',
 
     # Books & Entertainment
     'books_general_interest': 'entertainment',
@@ -172,27 +176,29 @@ category_mapping = {
     'la_cuisine': 'food',
 
     # Miscellaneous
-    'market_place': 'other',
-    'cool_stuff': 'other',
-    'security_and_services': 'other',
-    'signaling_and_security': 'other',
-    'party_supplies': 'other',
-    'christmas_supplies': 'other',
-    'watches_gifts': 'gifts',
-    'flowers': 'gifts',
+    'market_place': 'miscellaneous',
+    'cool_stuff': 'miscellaneous',
+    'security_and_services': 'miscellaneous',
+    'signaling_and_security': 'miscellaneous',
+    'party_supplies': 'miscellaneous',
+    'christmas_supplies': 'miscellaneous',
+    'watches_gifts': 'miscellaneous',
+    'flowers': 'miscellaneous',
     'pet_shop': 'pets',
     'baby': 'baby',
     'sports_leisure': 'sports',
     'toys': 'toys',
     'stationery': 'office_supplies',
     'office_furniture': 'office_supplies',
-    'luggage_accessories': 'luggage',
-    'industry_commerce_and_business': 'other',
-    'agro_industry_and_commerce': 'other',
+    'industry_commerce_and_business': 'miscellaneous',
+    'agro_industry_and_commerce': 'miscellaneous',
 }
 
 df_all['product_category_name_english'] = df_all['product_category_name_english'].replace(category_mapping)
 
+# print the category count
+category_counts = df_all['product_category_name_english'].value_counts()
+print(category_counts)
 
 ############################################################################################################################################################################################
 # --- create weekly dataset -------------------------------------------------------------------------------------------------------
