@@ -243,6 +243,7 @@ final_df = (
     .merge(review_score, on="week", how="left")
     .merge(shipping_time, on="week", how="left")
 )
+
 # add month and week of month columns
 final_df['week'] = final_df['week'].astype(str)  # Convert to string
 final_df['start_date'] = final_df['week'].str.split('/').str[0]  # Extract start date

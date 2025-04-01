@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
-from functions import create_input_target_vectors, scale_data, evaluate_model, predict_data
+from functions import create_input_target_vectors, scale_data, scale_per_column_data, evaluate_model, predict_data, ModelEvaluation
 import os
 import matplotlib.pyplot as plt
 
@@ -16,11 +16,19 @@ X, y = create_input_target_vectors(train_set, time_steps)  # Adjust time_steps a
 
 # 3. Create test and train data, normalize features and target
 n_features = 102
-X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = scale_data(X, y, time_steps, n_features)
-X_train_scaled = X_train_scaled.reshape(X_train_scaled.shape[0], -1)
-X_val_scaled = X_val_scaled.reshape(X_val_scaled.shape[0], -1)
-print(f"X_train_scaled shape: {X_train_scaled.shape}")
-print(f"y_train_scaled shape: {y_train_scaled.shape}")
+# X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = scale_data(X, y, time_steps, n_features)
+
+X = X.reshape(X.shape[0], -1)
+y = y.reshape(y.shape[0], -1)
+print(X.shape)
+X = pd.DataFrame(X)
+y = pd.DataFrame(y)
+
+X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = scale_per_column_data(X, y)
+print(X_train_scaled)
+# 3.1 make X_data 2D for the model to work
+# X_train_scaled = X_train_scaled.reshape(X_train_scaled.shape[0], -1)
+# X_val_scaled = X_val_scaled.reshape(X_val_scaled.shape[0], -1)
 
 # 4. Build the Random Forest & XGBoost
 model = RandomForestRegressor(n_estimators=100, random_state=42)
@@ -42,4 +50,14 @@ grid_search.fit(X_val_scaled, y_val_scaled)
 print("Best Parameters for Random Forest:", grid_search.best_params_)
 
 # 6. Predict and evaluate model
-predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+y_true, y_pred = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+
+# 7. Evaluate model
+evaluate_model(y_true, y_pred)
+
+# Widget
+LSTMev = ModelEvaluation(y_true, y_pred, name="LSTM")
+categories = ["automotive", "baby", "beauty_health", "construction_tools", "electronics", "entertainment", "fashion", "food", "furniture", "garden_tools", "gifts", "home_appliances", "housewares", "luggage", "office_supplies", "other", "pets", "sports", "telephony", "toys"]
+LSTMev.set_categories(categories)
+LSTMev.plot_categories()
+print(LSTMev.EvaluateResults())

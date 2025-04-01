@@ -1,10 +1,7 @@
 import pandas as pd
-import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.layers import LSTM, Dense, Dropout
-from tensorflow.keras.callbacks import EarlyStopping
 import os
-from functions import create_input_target_vectors, scale_data, predict_data, evaluate_model
+from functions import create_input_target_vectors, scale_data, evaluate_model, predict_data, ModelEvaluation
 
 # 1. Load the data
 data_dir = os.path.join(os.getcwd(), "data")
@@ -40,4 +37,14 @@ history = model.fit(X_train_scaled, y_train_scaled, epochs=200, validation_data=
                     callbacks=[early_stopping], batch_size=8, verbose=1)
 
 # 6. Predict and evaluate model
-predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+y_true, y_pred = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
+
+# 7. Evaluate model
+evaluate_model(y_true, y_pred)
+
+# Widget
+LSTMev = ModelEvaluation(y_true, y_pred, name="LSTM")
+categories = ["automotive", "baby", "beauty_health", "construction_tools", "electronics", "entertainment", "fashion", "food", "furniture", "garden_tools", "gifts", "home_appliances", "housewares", "luggage", "office_supplies", "other", "pets", "sports", "telephony", "toys"]
+LSTMev.set_categories(categories)
+LSTMev.plot_categories()
+print(LSTMev.EvaluateResults())
