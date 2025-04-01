@@ -101,7 +101,6 @@ if visualise:
 category_mapping = {
 
     # Home & Furniture
-    
     'furniture_decor': 'furniture',
     'furniture_living_room': 'furniture',
     'furniture_bedroom': 'furniture',
@@ -212,15 +211,12 @@ df_data["week"] = pd.to_datetime(df_data['order_purchase_timestamp']).dt.to_peri
 # per week and per item type dataframes
 item = df_data.groupby(['week', 'product_category_name_english']).size().unstack(fill_value=0)
 total_items = df_data.groupby('week').size()
-#item = item.div(total_items, axis=0)
 
 price = df_data.groupby(['week', 'product_category_name_english'])['price'].sum().unstack(fill_value=0)
 total_price = df_data.groupby('week')['price'].sum()
-#price = price.div(total_price, axis=0)
 
 freight_value = df_data.groupby(['week', 'product_category_name_english'])['freight_value'].sum().unstack(fill_value=0)
 total_freight_value = df_data.groupby('week')['price'].sum()
-#freight_value = freight_value.div(total_freight_value, axis=0)
 
 overall_avg = df_data['review_score'].mean() # overall average review score for filling missing values
 review_score = df_data.groupby(['week', 'product_category_name_english'])['review_score'].mean().unstack(fill_value=overall_avg)
