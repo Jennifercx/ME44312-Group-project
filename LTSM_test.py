@@ -111,9 +111,8 @@ plt.xlabel("Time (weeks)")
 plt.ylabel("Sales Price")
 plt.show()
 
-LSTMev = ModelEvaluation(y_test_trimmed, y_pred_shift, name="LSTM")
-
-categories = ["automotive", "baby", "beauty_health","electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
-LSTMev.set_categories(categories)
-LSTMev.plot_categories()
-print(LSTMev.EvaluateResults())
+# 9. Predict sales for next week
+latest_features = X_scaled[-1].reshape(1, X_train.shape[1], 1)  # Use the latest available data
+next_week_prediction_scaled = model.predict(latest_features)
+next_week_prediction = scaler_y.inverse_transform(next_week_prediction_scaled)  # Convert back to original scale
+print(f"Expected sales for next week: {next_week_prediction[0][0]:.2f}")
