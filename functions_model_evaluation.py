@@ -37,11 +37,11 @@ class ModelEvaluation:
         self.categories = categories
     
     def plot_category(self, cat):
-
         y_true = self.y_true
         y_pred = self.y_pred
         clear_output(wait=True)
         cat_index = self.categories.index(cat)
+        print(cat, cat_index)
         weeks = np.arange(1, y_true.shape[0] + 1)
         plt.figure(figsize=(10, 5))
         plt.plot(weeks, y_true[:, cat_index], marker='o', label='y_true')
@@ -78,7 +78,7 @@ def predict_data(model, X_test, y_test, scaler_y):
 # visualise output
 def plot_widget(y_true, y_pred, name = 'Widget'):
     Widget = ModelEvaluation(y_true, y_pred, name)
-    categories = ["automotive", "baby", "beauty_health", "construction_tools", "electronics", "entertainment", "fashion", "food", "furniture", "garden_tools", "gifts", "home_appliances", "housewares", "luggage", "office_supplies", "other", "pets", "sports", "telephony", "toys"]
+    categories = ["automotive", "baby", "beauty_health","electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
     Widget.set_categories(categories)
     Widget.plot_categories()
     print(Widget.EvaluateResults())
