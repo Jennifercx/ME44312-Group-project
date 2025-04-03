@@ -61,9 +61,7 @@ class ModelEvaluation:
 # Predicts and plots the sales per week per product category
 def predict_data(model, X_test, y_test, scaler_y):
     y_pred = scaler_y.inverse_transform(model.predict(X_test))  # Reverse transformation
-    y_pred = y_pred[:-1]                 # Shift data since we predict the next week based on the current week
     y_true = scaler_y.inverse_transform(y_test)  # Reverse transformation for actual values
-    y_true = y_true[1:]
 
     # plt.figure(figsize=(12, 5))
     # plt.plot(y_true, label="Actual sales", marker="o")

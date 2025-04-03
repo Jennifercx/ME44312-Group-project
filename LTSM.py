@@ -6,7 +6,8 @@ from functions_model_evaluation import validate_model
 
 # 1. process data
 time_steps = 2
-X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = process_data(time_steps)
+output_name = 'price'
+X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = process_data(time_steps, output_name)
 
 # 1.1 reshape data
 X_train_scaled = X_train_scaled.to_numpy()

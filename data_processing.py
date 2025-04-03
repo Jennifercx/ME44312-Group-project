@@ -2,7 +2,6 @@
 import pandas as pd
 import os
 import plotly.express as px
-import numpy as np
 
 # data directory
 data_dir = os.path.join(os.getcwd(), "data")
