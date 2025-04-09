@@ -20,10 +20,10 @@ df_sellers = pd.read_csv(os.path.join(data_dir, "olist_sellers_dataset.csv"))
 df_product_category_name = pd.read_csv(os.path.join(data_dir, "product_category_name_translation.csv"))
 
 # combine all datasets and save to .csv file
-df_all = df_customer.merge(df_orders, on='customer_id', how='left').merge(df_reviews, on='order_id', how='left').merge(df_payments, on='order_id', how='left').merge(df_order_items, on='order_id', how='left').merge(df_sellers, on='seller_id', how='left').merge(df_products, on='product_id', how='left').merge(df_product_category_name, on='product_category_name', how='left')
+df_merged = df_customer.merge(df_orders, on='customer_id', how='left').merge(df_reviews, on='order_id', how='left').merge(df_payments, on='order_id', how='left').merge(df_order_items, on='order_id', how='left').merge(df_sellers, on='seller_id', how='left').merge(df_products, on='product_id', how='left').merge(df_product_category_name, on='product_category_name', how='left')
 df_shipping_time = pd.DataFrame((pd.to_datetime(df_orders["order_delivered_customer_date"]) -pd.to_datetime(df_orders["order_purchase_timestamp"])).dt.total_seconds()/(24*3600))
-df_all["shipping_time"] = pd.DataFrame((pd.to_datetime(df_orders["order_delivered_customer_date"]) -pd.to_datetime(df_orders["order_purchase_timestamp"])).dt.total_seconds()/(24*3600))
-df_all.to_csv('data/merged_data.csv', index=False)
+df_merged["shipping_time"] = pd.DataFrame((pd.to_datetime(df_orders["order_delivered_customer_date"]) -pd.to_datetime(df_orders["order_purchase_timestamp"])).dt.total_seconds()/(24*3600))
+df_merged.to_csv('data/merged_data.csv', index=False)
 
 ############################################################################################################################################################################################
 # --- Data Cleaning -------------------------------------------------------------------------------------------------------
@@ -31,21 +31,22 @@ df_all.to_csv('data/merged_data.csv', index=False)
 visualise = False # Set to True to visualise the cleaning process
 
 # Create a copy of the original dataframe before cleaning
-df_orig = df_all.copy()
+# select relevant columns only
+df_data = df_merged[["order_purchase_timestamp", "order_status", "review_score", "price", "freight_value", "shipping_time", "product_category_name_english"]].copy()
 
 # Generate a mask for rows that satisfy all conditions:
 clean_mask = (
-    df_orig['product_category_name_english'].notna() & # drop rows with missing values in product_category_name_english
-    (pd.to_datetime(df_orig["order_purchase_timestamp"]).dt.year > 2016) & # Filter out data from 2016 because highly discontinuous
-    (df_orig["order_status"] == "delivered") & # Filter out orders that are not delivered
-    (pd.to_datetime(df_orig["order_purchase_timestamp"]).dt.date < pd.to_datetime("2018-08-27").date())
+    df_data['product_category_name_english'].notna() & # drop rows with missing values in product_category_name_english
+    (pd.to_datetime(df_data["order_purchase_timestamp"]).dt.year > 2016) & # Filter out data from 2016 because highly discontinuous
+    (df_data["order_status"] == "delivered") & # Filter out orders that are not delivered
+    (pd.to_datetime(df_data["order_purchase_timestamp"]).dt.date < pd.to_datetime("2018-08-27").date())
 )
 
 # Save removed rows
-df_trash = df_orig[~clean_mask]
+df_trash = df_data[~clean_mask]
 
 # Apply the cleaning
-df_all = df_orig[clean_mask]
+df_data = df_data[clean_mask]
 
 # --- Visualisation to analyse the cleaning process -------------------------------------------------------------------------------------------------------
 if visualise:
@@ -192,18 +193,17 @@ category_mapping = {
     'agro_industry_and_commerce': 'miscellaneous',
 }
 
-df_all['product_category_name_english'] = df_all['product_category_name_english'].replace(category_mapping)
+df_data['product_category_name_english'] = df_data['product_category_name_english'].replace(category_mapping)
 
 # print the category count
-category_counts = df_all['product_category_name_english'].value_counts()
+category_counts = df_data['product_category_name_english'].value_counts()
 print(category_counts)
 
 ############################################################################################################################################################################################
 # --- create weekly dataset -------------------------------------------------------------------------------------------------------
 ############################################################################################################################################################################################
 
-# select relevant columns only
-df_data = df_all[["order_purchase_timestamp", "review_score", "price", "freight_value", "shipping_time", "product_category_name_english"]]
+# convert week colum to proper format
 df_data.dropna(inplace=True)
 df_data["week"] = pd.to_datetime(df_data['order_purchase_timestamp']).dt.to_period("W")
 
