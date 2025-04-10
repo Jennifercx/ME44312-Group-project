@@ -144,3 +144,28 @@ def process_data(time_steps, output = "item", path = "data/processed_data/proces
 
     # return processed data
     return X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y
+
+def process_data_for_category(category_name, time_steps, path="data/processed_data/processed_dataset.csv"):
+    import pandas as pd
+    import os
+
+    df = pd.read_csv(os.path.join(os.getcwd(), path))
+
+    # Keep only columns relevant to the selected category + week
+    category_cols = [col for col in df.columns if col.startswith(category_name)]
+    category_cols.append("week")
+    df = df[category_cols]
+
+    # Create input-output
+    X, y = create_input_output(df, time_steps, output_name="price")
+
+    # Split into train/test (last 15 weeks)
+    n_test = 15
+    X_train, X_test = X[:-n_test], X[-n_test:]
+    y_train, y_test = y[:-n_test], y[-n_test:]
+
+    # Scale
+    X_train_scaled, X_test_scaled, scaler_X = scale_data(X_train, X_test)
+    y_train_scaled, y_test_scaled, scaler_y = scale_data(y_train, y_test)
+
+    return X_train_scaled, X_test_scaled, scaler_X, y_train_scaled, y_test_scaled, scaler_y
