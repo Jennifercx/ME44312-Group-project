@@ -1,43 +1,49 @@
+# imports
 from tensorflow import keras
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import optimizers
-from functions_data_processing import process_data_for_category
-from matplotlib import pyplot as plt
+
+from functions_data_processing import process_data
+from functions_model_evaluation import validate_model
+
 import os
-import numpy as np
-import ipywidgets as widgets
-from IPython.display import display, clear_output
+import pandas as pd
 
 # Parameters
 time_steps = 2
 output_name = 'price'
-categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
+# categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
+categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
+model_name = 'LTSM'
 
-# Output directory
+# Paths
+data_path = os.path.join(os.getcwd(), "data/processed_data/processed_dataset.csv")
+data_set = pd.read_csv(data_path)
 os.makedirs("results", exist_ok=True)
+result_path = os.path.join(os.getcwd(), "results")
 
-# For interactive visual
+# For storage
 y_pred_all = {}
 y_true_all = {}
 histories = {}
+error_metrics = {}
 
 for category in categories:
-    print(f"\n▶️ Training model for category: {category}")
+    # print(f"\n▶️ Training model for category: {category}")
 
-    # Step 1: Load and process data
-    X_train_scaled, X_val_scaled, _, y_train_scaled, y_val_scaled, scaler_y = process_data_for_category(category, time_steps)
+    # Load and process data
+    X_train_scaled, X_val_scaled, _, y_train_scaled, y_val_scaled, scaler_y = process_data(data_set, category, time_span = time_steps)
 
-    # Step 1.1: Reshape input to 3D
+    # Reshape data to format the model wants
     if hasattr(X_train_scaled, 'to_numpy'):
         X_train_scaled = X_train_scaled.to_numpy()
     if hasattr(X_val_scaled, 'to_numpy'):
         X_val_scaled = X_val_scaled.to_numpy()
-
     X_train_scaled = X_train_scaled.reshape((X_train_scaled.shape[0], time_steps, X_train_scaled.shape[1] // time_steps))
     X_val_scaled = X_val_scaled.reshape((X_val_scaled.shape[0], time_steps, X_val_scaled.shape[1] // time_steps))
 
-    # Step 2: Build LSTM model
+    # Build LSTM model
     model = keras.Sequential([
         keras.Input(shape=(X_train_scaled.shape[1], X_train_scaled.shape[2])),
         LSTM(256, return_sequences=True),
@@ -47,10 +53,9 @@ for category in categories:
         Dense(1)
     ])
     model.compile(optimizer=optimizers.Adam(learning_rate=0.0005), loss="huber", metrics=["mae"])
-
     early_stopping = EarlyStopping(monitor="val_loss", patience=7, restore_best_weights=True)
 
-    # Step 3: Train the model
+    # Train the model
     history = model.fit(
         X_train_scaled, y_train_scaled,
         validation_data=(X_val_scaled, y_val_scaled),
@@ -60,55 +65,38 @@ for category in categories:
         verbose=1
     )
 
-    # Step 4: Predict and store
-    y_pred_scaled = model.predict(X_val_scaled)
-    y_pred = scaler_y.inverse_transform(y_pred_scaled)
-    y_true = scaler_y.inverse_transform(y_val_scaled)
+    # Validate model
+    y_pred, y_true, mae, mse, r2 = validate_model(model, X_val_scaled, y_val_scaled, scaler_y)
 
+    # Store validation data
+    error_metrics[category] = {'mse': mse, 'mae': mae, 'r2': r2}
     y_pred_all[category] = y_pred
     y_true_all[category] = y_true
     histories[category] = history
 
-    # Optional: save the model
-    # model.save(f"results/{category}_lstm_model.keras")
+# Store error metrics
+temp_df = pd.DataFrame(error_metrics)
+file_path_metrics = os.path.join(result_path, model_name + "_error_metrics.csv")
+temp_df.to_csv(file_path_metrics, index=False)
 
-# === INTERACTIVE WIDGET VISUALIZATION ===
-category_dropdown = widgets.Dropdown(
-    options=categories,
-    description='Category:',
-    layout=widgets.Layout(width='50%')
-)
+# Store y_pred metrics
+temp_df = pd.DataFrame({
+    category: preds.ravel()
+    for category, preds in y_pred_all.items()
+})
+file_path_metrics = os.path.join(result_path, model_name + "_y_pred.csv")
+temp_df.to_csv(file_path_metrics, index=False)
 
-output = widgets.Output()
+# Store y_true metrics
+temp_df = pd.DataFrame({
+    category: preds.ravel()
+    for category, preds in y_true_all.items()
+})
+file_path_metrics = os.path.join(result_path, model_name + "_y_true.csv")
+temp_df.to_csv(file_path_metrics, index=False)
 
-def plot_selected_category(change):
-    with output:
-        clear_output(wait=True)
-        cat = change['new']
-
-        plt.figure(figsize=(12, 4))
-
-        # Plot 1: Training and validation loss
-        plt.subplot(1, 2, 1)
-        plt.plot(histories[cat].history['loss'], label='Train Loss')
-        plt.plot(histories[cat].history['val_loss'], label='Val Loss')
-        plt.title(f'{cat.title()} - Training vs Validation Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
-        plt.legend()
-
-        # Plot 2: Prediction vs Actual
-        plt.subplot(1, 2, 2)
-        plt.plot(y_true_all[cat], label='Actual', linewidth=2)
-        plt.plot(y_pred_all[cat], label='Predicted', linestyle='--')
-        plt.title(f'{cat.title()} - Predicted vs Actual Price')
-        plt.xlabel('Week')
-        plt.ylabel('Price')
-        plt.legend()
-
-        plt.tight_layout()
-        plt.show()
-
-category_dropdown.observe(plot_selected_category, names='value')
-display(category_dropdown, output)
-category_dropdown.value = categories[0]  # trigger initial plot
+# Store histories metrics
+for category, history in histories.items():
+    temp_df = pd.DataFrame(history.history)
+    file_path = os.path.join(result_path, model_name + f"_history_{category}.csv")
+    temp_df.to_csv(file_path, index=False)

@@ -104,11 +104,11 @@ if visualise:
 # print(category_counts)
 
 # Keep only top five counts
-top_5_categories = df_data['product_category_name_english'].value_counts().head(5)
-print(top_5_categories)
-top_5_categories.to_csv(os.path.join(processed_data_dir, "top_five_categories.csv"), index=False)
-#print(df_data['product_category_name_english'].isin(top_5_categories.index))
-df_data = df_data[df_data['product_category_name_english'].isin(top_5_categories.index)]
+# top_5_categories = df_data['product_category_name_english'].value_counts().head(5)
+# print(top_5_categories)
+# top_5_categories.to_csv(os.path.join(processed_data_dir, "top_five_categories.csv"), index=False)
+# #print(df_data['product_category_name_english'].isin(top_5_categories.index))
+# df_data = df_data[df_data['product_category_name_english'].isin(top_5_categories.index)]
 
 # merge categories
 '''

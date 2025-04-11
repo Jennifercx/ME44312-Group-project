@@ -7,14 +7,6 @@ from IPython.display import clear_output
 
 # --- functions -------------------------------------------------------------------------------------------------------
 
-# Evaluates the model for the selected parameters
-def evaluate_model(y_true, y_pred):
-    mae = mean_absolute_error(y_true, y_pred)
-    mse = mean_squared_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
-    print(f"MAE: {mae:.2f}, MSE: {mse:.2f}, R^2: {r2:.2f}")
-    return mae, mse, r2
-
 # Plots the weekly sales per product category
 class ModelEvaluation:
 
@@ -58,11 +50,6 @@ class ModelEvaluation:
         dropdown = widgets.Dropdown(options=self.categories, description='Category:')
         widgets.interact(self.plot_category, cat=dropdown)
 
-# Predicts and plots the sales per week per product category
-def predict_data(model, X, y, scaler_y):
-
-    return y_true, y_pred
-
 # Visualise output
 def plot_widget(y_true, y_pred, name = 'Widget'):
     Widget = ModelEvaluation(y_true, y_pred, name)
@@ -84,18 +71,15 @@ def validate_model(model, X_val_scaled, y_val_scaled, scaler_y):
     mse = mean_squared_error(y_true, y_pred)
     r2 = r2_score(y_true, y_pred)
 
-    return mae, mse, r2
-# {'mse': mse, 'mae': mae, 'r2': r2}
+    return y_pred, y_true, mae, mse, r2
 
-    # 3. visualise results
-    plot_widget(y_true, y_pred)
+    # === INTERACTIVE WIDGET VISUALIZATION ===
 
+def plot_model(categories):
+    category_dropdown = widgets.Dropdown(
+        options=categories,
+        description='Category:',
+        layout=widgets.Layout(width='50%')
+    )
 
-    # plt.figure(figsize=(12, 5))
-    # plt.plot(y_true, label="Actual sales", marker="o")
-    # plt.plot(y_pred, label="Predicted sales", marker="x")
-    # plt.legend()
-    # plt.title("Predicted vs. Actual Sales")
-    # plt.xlabel("Time (weeks)")
-    # plt.ylabel("Sales Price")
-    # plt.show()
+    output = widgets.Output()
