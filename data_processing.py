@@ -52,7 +52,7 @@ df_data = df_data[clean_mask]
 if visualise:
     # Convert timestamps to datetime objects
     sales_clean = (
-        df_all.groupby(pd.to_datetime(df_all['order_purchase_timestamp']).dt.date)
+        df_data.groupby(pd.to_datetime(df_data['order_purchase_timestamp']).dt.date)
             .size()
             .reset_index(name='count')
     )
@@ -96,8 +96,22 @@ if visualise:
     fig.update_layout(paper_bgcolor='#212121',plot_bgcolor='#262626',  font=dict(color='white'),title_font=dict(color='white'))
     fig.update_traces(marker_line_width=0)
     fig.show()
+
 # map categories to more general categories -----------------------------------------------------------------------------------------------------------------------------------------------
 
+# print the category count
+# category_counts = df_data['product_category_name_english'].value_counts()
+# print(category_counts)
+
+# Keep only top five counts
+top_5_categories = df_data['product_category_name_english'].value_counts().head(5)
+print(top_5_categories)
+top_5_categories.to_csv(os.path.join(processed_data_dir, "top_five_categories.csv"), index=False)
+#print(df_data['product_category_name_english'].isin(top_5_categories.index))
+df_data = df_data[df_data['product_category_name_english'].isin(top_5_categories.index)]
+
+# merge categories
+'''
 category_mapping = {
 
     # Home & Furniture
@@ -135,7 +149,7 @@ category_mapping = {
     'fashion_bags_accessories': 'fashion',
     'fashion_underwear_beach': 'fashion',
     'fashion_sport': 'fashion',
-     'luggage_accessories': 'fashion',
+    'luggage_accessories': 'fashion',
 
     # Electronics & Tech
     'electronics': 'electronics',
@@ -192,12 +206,9 @@ category_mapping = {
     'industry_commerce_and_business': 'miscellaneous',
     'agro_industry_and_commerce': 'miscellaneous',
 }
-
 df_data['product_category_name_english'] = df_data['product_category_name_english'].replace(category_mapping)
+'''
 
-# print the category count
-category_counts = df_data['product_category_name_english'].value_counts()
-print(category_counts)
 
 ############################################################################################################################################################################################
 # --- create weekly dataset -------------------------------------------------------------------------------------------------------

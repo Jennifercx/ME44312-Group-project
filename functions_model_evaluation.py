@@ -10,10 +10,10 @@ from IPython.display import clear_output
 # Evaluates the model for the selected parameters
 def evaluate_model(y_true, y_pred):
     mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
     mse = mean_squared_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
     print(f"MAE: {mae:.2f}, MSE: {mse:.2f}, R^2: {r2:.2f}")
-    return 0
+    return mae, mse, r2
 
 # Plots the weekly sales per product category
 class ModelEvaluation:
@@ -59,9 +59,37 @@ class ModelEvaluation:
         widgets.interact(self.plot_category, cat=dropdown)
 
 # Predicts and plots the sales per week per product category
-def predict_data(model, X_test, y_test, scaler_y):
-    y_pred = scaler_y.inverse_transform(model.predict(X_test))  # Reverse transformation
-    y_true = scaler_y.inverse_transform(y_test)  # Reverse transformation for actual values
+def predict_data(model, X, y, scaler_y):
+
+    return y_true, y_pred
+
+# Visualise output
+def plot_widget(y_true, y_pred, name = 'Widget'):
+    Widget = ModelEvaluation(y_true, y_pred, name)
+    categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
+    # categories = ["automotive", "baby", "beauty_health","electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
+    Widget.set_categories(categories)
+    Widget.plot_categories()
+    print(Widget.EvaluateResults())
+
+def validate_model(model, X_val_scaled, y_val_scaled, scaler_y):
+
+    # 1. predict data
+    y_pred = model.predict(X_val_scaled)
+    y_pred = scaler_y.inverse_transform(np.array(y_pred).reshape(-1,1)) # Reverse transformation
+    y_true = scaler_y.inverse_transform(y_val_scaled) # Reverse transformation for actual values
+
+    # 2. Evaluate model
+    mae = mean_absolute_error(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+
+    return mae, mse, r2
+# {'mse': mse, 'mae': mae, 'r2': r2}
+
+    # 3. visualise results
+    plot_widget(y_true, y_pred)
+
 
     # plt.figure(figsize=(12, 5))
     # plt.plot(y_true, label="Actual sales", marker="o")
@@ -71,23 +99,3 @@ def predict_data(model, X_test, y_test, scaler_y):
     # plt.xlabel("Time (weeks)")
     # plt.ylabel("Sales Price")
     # plt.show()
-    return y_true, y_pred
-
-# visualise output
-def plot_widget(y_true, y_pred, name = 'Widget'):
-    Widget = ModelEvaluation(y_true, y_pred, name)
-    categories = ["automotive", "baby", "beauty_health","electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
-    Widget.set_categories(categories)
-    Widget.plot_categories()
-    print(Widget.EvaluateResults())
-
-def validate_model(model, X_val_scaled, y_val_scaled, scaler_y):
-
-    # 1. predict data
-    y_true, y_pred = predict_data(model, X_val_scaled, y_val_scaled, scaler_y)
-
-    # 2. Evaluate model
-    evaluate_model(y_true, y_pred)
-
-    # 3. visualise results
-    plot_widget(y_true, y_pred)
