@@ -15,7 +15,7 @@ time_steps = 2
 output_name = 'price'
 # categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
 categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
-model_name = 'LTSM'
+model_name = 'LSTM'
 
 # Paths
 data_path = os.path.join(os.getcwd(), "data/processed_data/processed_dataset.csv")

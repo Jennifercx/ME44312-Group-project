@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 def interactive_model_plot(model_dfs, categories, error_indices):
     """
-    model_dfs: a dict mapping model name (e.g., 'LTSM') to its error metrics dataframe.
+    model_dfs: a dict mapping model name (e.g., 'LSTM') to its error metrics dataframe.
                Each dataframe should have error metrics for each category arranged row-wise,
                e.g., row0 = MSE, row1 = MAE, row2 = R².
     categories: list of category names (order corresponds to columns in the model dfs).
@@ -65,7 +65,7 @@ def interactive_model_plot(model_dfs, categories, error_indices):
                 pos = base + i * barWidth
                 # Optionally assign a color based on the model name
                 color = None
-                if m == 'LTSM': color = 'r'
+                if m == 'LSTM': color = 'r'
                 elif m == 'RF': color = 'g'
                 elif m == 'ARIMA': color = 'b'
                 elif m == 'GB': color = 'y'
@@ -93,7 +93,7 @@ def interactive_model_plot(model_dfs, categories, error_indices):
 # Example usage:
 # Define file paths and load your error metrics CSV files
 result_path = os.path.join(os.getcwd(), "results")
-df_LTSM = pd.read_csv(os.path.join(result_path, 'LTSM_error_metrics.csv'))
+df_LSTM = pd.read_csv(os.path.join(result_path, 'LSTM_error_metrics.csv'))
 df_RF = pd.read_csv(os.path.join(result_path, 'RF_error_metrics.csv'))
 df_ARIMA = pd.read_csv(os.path.join(result_path, 'ARIMA_error_metrics.csv'))
 df_GB = pd.read_csv(os.path.join(result_path, 'GB_error_metrics.csv'))
@@ -108,7 +108,7 @@ error_indices = ['mae', 'mse', 'r2']
 # Define the dictionary mapping model names to their dataframes
 # Note: Uncomment the models you want to include in the plot
 model_dfs = {
-    'LTSM': df_LTSM,
+    'LSTM': df_LSTM,
     #'RF': df_RF,
     'ARIMA': df_ARIMA,
     #'GB': df_GB
