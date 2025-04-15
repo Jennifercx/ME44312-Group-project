@@ -11,7 +11,7 @@ result_path = os.path.join(os.getcwd(), "results")
 # input parameters
 output_name = 'price'
 categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
-model = 'ARIMA'
+model = 'LSTM'
 
 # plot parameters
 y_pred = pd.read_csv(os.path.join(result_path, model + '_y_pred.csv'))
@@ -35,7 +35,7 @@ def plot_selected_category(change):
         plt.figure(figsize=(12, 4))
 
         # Plot 1: Training and validation loss
-        if model == 'LTSM':
+        if model == 'LSTM':
             plt.subplot(1, 2, 1)
             df_history = pd.read_csv(os.path.join(result_path, model + '_history_' + cat + '.csv'))
             plt.plot(df_history['loss'], label='Train Loss')

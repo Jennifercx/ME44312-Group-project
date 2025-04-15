@@ -11,9 +11,9 @@ import os
 import pandas as pd
 
 # Parameters
-time_steps = 2 # Number of weeks used to predict next weeks data
+time_steps = 1 # Number of weeks used to predict next weeks data
 training_percentage = 0.8
-validation_percentage = 0.5 # what percentage of the validation/testing data should be use for validation
+validation_percentage = 0.3 # what percentage of the validation/testing data should be use for validation
 output_name = 'price' #Name of the output feature
 
 # The categories list for which product type a model should be created
@@ -41,12 +41,12 @@ for category in categories:
 
     # Create train, validate, and test data sets
     training_weeks = int(training_percentage * len(X))
-    X_train, X_validate = split_data(X, training_weeks)
-    y_train, y_validate = split_data(y, training_weeks)
+    X_train, X_test = split_data(X, training_weeks)
+    y_train, y_test = split_data(y, training_weeks)
 
-    validation_weeks = int(validation_percentage * (len(X) - training_weeks))
-    X_validate, X_test = split_data(X_validate, validation_weeks)
-    y_validate, y_test = split_data(y_validate, validation_weeks)
+    validation_weeks = int((1-validation_percentage) * training_weeks)
+    X_validate = X_train[validation_weeks:]
+    y_validate = y_train[validation_weeks:]
 
     # Scale train and validation data
     X_train_scaled, X_validate_scaled, X_test_scaled, X_scaler = scale_data(X_train, X_validate, X_test)
@@ -91,7 +91,7 @@ for category in categories:
     # Store validation data
     error_metrics[category] = {'mse': mse, 'mae': mae, 'r2': r2}
     y_pred_all[category] = y_pred
-    y_true_all[category] = y_test
+    y_true_all[category] = y_true
     histories[category] = history
 
 # Store error metrics

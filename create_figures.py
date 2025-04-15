@@ -6,8 +6,8 @@ from matplotlib import colormaps
 
 # Choose m
 selected_models = [ 'LSTM', 'ARIMA']
-selected_error = 'r2'
-fig_name = 'r2.png'
+selected_error = 'mse'
+fig_name = 'mse.png'
 path = os.path.join(os.getcwd(), "figures/" + fig_name)
 
 cmap = plt.get_cmap('viridis')  # Get the Viridis colormap

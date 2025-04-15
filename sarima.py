@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 
 # Parameters
 time_steps = 1 # Number of weeks used to predict next weeks data
-training_percentage = 0.90
+training_percentage = 0.80
 output_name = 'price' #Name of the output feature
 
 # The categories list for which product type a model should be created
