@@ -34,12 +34,12 @@ for category in categories:
 
     # Load and process data
     X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
-
+    # print(X[:,0])
     # Create train, validate, and test data sets
     training_weeks = int(training_percentage * len(X))
     X_train, X_test = split_data(X, training_weeks)
     y_train, y_test = split_data(y, training_weeks)
-
+    
     # Use auto_arima with exogenous regressors on the training data to select orders
     auto_model = auto_arima(
         y_train,

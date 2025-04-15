@@ -35,7 +35,8 @@ for category in categories:
 
     # Load and process data
     X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
-
+    print(X.shape)
+    print(np.sum(X[:, 0]))
     # Create train, validate, and test data sets
     training_weeks = int(training_percentage * len(X))
     X_train, X_test = split_data(X, training_weeks)

@@ -11,7 +11,7 @@ import os
 import pandas as pd
 
 # Parameters
-time_steps = 1 # Number of weeks used to predict next weeks data
+time_steps = 2 # Number of weeks used to predict next weeks data
 training_percentage = 0.8
 validation_percentage = 0.5 # what percentage of the validation/testing data should be use for validation
 output_name = 'price' #Name of the output feature
@@ -91,7 +91,7 @@ for category in categories:
     # Store validation data
     error_metrics[category] = {'mse': mse, 'mae': mae, 'r2': r2}
     y_pred_all[category] = y_pred
-    y_true_all[category] = y_true
+    y_true_all[category] = y_test
     histories[category] = history
 
 # Store error metrics
