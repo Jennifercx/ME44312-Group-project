@@ -1,6 +1,6 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
-from functions_data_processing import process_data
+from functions_data_processing import process_data_scaled
 from functions_model_evaluation import validate_model
 import os
 import pandas as pd
@@ -29,7 +29,7 @@ error_metrics = {}
 for category in product_categories:
 
     # Scale and reshape data
-    X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = process_data(data_set, category, time_span = time_steps)
+    X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = process_data_scaled(data_set, category, time_span = time_steps)
     
     # Reshape data to format the model wants
     y_train_scaled = np.ravel(y_train_scaled)

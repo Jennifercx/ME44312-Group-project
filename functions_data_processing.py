@@ -24,18 +24,24 @@ def scale_data(train, test):
     return train_scaled, test_scaled, scaler
 
 # Splits data into train and validation data
-def process_data(df, category, time_span = 1, output = "items"):
+def process_data_scaled(df, category, time_span = 1, output = "items"):
     '''
     input
-    time_span is the number of week in the past the model should use to predict next week
-    df is the dataframe containing the dataset
-    category is the name of the product category that should be filtered from df
-    output is the name of the output feature
+    time_span   : number of week in the past the model should use to predict next week
+    df          : dataframe containing the dataset
+    category    : name of the product category that should be filtered from df
+    output      : name of the output feature
 
     function
     this function creates test and validation data for a single product category
 
-    output
+    returns
+    x_train_scaled     : scaled input data used to train a model
+    x_val_scaled       : scaled input data used to validate a model
+    scaler_x           : scaler object containing the original output mean and standard deviation
+    y_train_scaled     : scaled output data used to train a model
+    y_val_scaled       : scaled output data used to validate a model
+    scaler_y           : scaler object containing the original input mean and standard deviation
     '''
 
     # Filter out only the selected product category with product
@@ -55,10 +61,6 @@ def process_data(df, category, time_span = 1, output = "items"):
     X = X.reshape(X.shape[0], -1)
     y = y.reshape(y.shape[0], -1)
 
-    # 3. Split data into test and train
-    # random splitting
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
     # This determines how week the validation data should be 
     n_test = 17 + time_span 
 
@@ -72,3 +74,48 @@ def process_data(df, category, time_span = 1, output = "items"):
 
     # return processed data
     return X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y
+
+def process_data(df, category, time_span = 1, output = "items"):
+    '''
+    input
+    time_span   : number of week in the past the model should use to predict next week
+    df          : dataframe containing the dataset
+    category    : name of the product category that should be filtered from df
+    output      : name of the output feature
+
+    function
+    this function creates test and validation data for a single product category
+
+    returns
+    x_train     : input data used to train a model
+    x_val       : input data used to validate a model
+    y_train     : output data used to train a model
+    y_val       : output data used to validate a model
+    '''
+
+    # Filter out only the selected product category with product
+    input_cols = df[[col for col in df.columns if col.startswith(category)]]
+    output_cols = df[[category + '_' + output]]
+
+    # 2. Create input and target vectors
+    X = []
+    y = []
+    for i in range(len(df) - time_span - 1): # -1 is to shift the data between train and test
+        X.append(input_cols.iloc[i:i + time_span].values)
+        y.append(output_cols.iloc[i + time_span + 1].values) # 1 is to select the test as next week
+    
+    # make X and y 2D
+    X = np.array(X)
+    y = np.array(y)
+    X = X.reshape(X.shape[0], -1)
+    y = y.reshape(y.shape[0], -1)
+
+    # This determines how week the validation data should be 
+    n_test = 17 + time_span 
+
+    # Split data: Train data will be everything except the last n_test samples, Test data will be the last n_test samples
+    X_train, X_val = X[:-n_test], X[-n_test:]
+    y_train, y_val  = y[:-n_test], y[-n_test:]
+
+    # return processed data
+    return X_train, X_val, y_train, y_val

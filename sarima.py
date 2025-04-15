@@ -7,7 +7,6 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import os
 from functions_data_processing import process_data
 
-
 warnings.filterwarnings("ignore")
 
 # Parameters

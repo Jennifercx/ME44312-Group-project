@@ -59,7 +59,7 @@ def plot_selected_category(change):
         else:
             plt.plot(y_true[cat], label='Actual', linewidth=2)
             plt.plot(y_pred[cat], label='Predicted', linestyle='--')
-            plt.title(f'{cat.title()} - Predicted vs Actual Price')
+            plt.title(f'{cat.title()} - Predicted vs Actual Price for ' + model)
             plt.xlabel('Week')
             plt.ylabel('Price')
             plt.legend()

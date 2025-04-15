@@ -4,7 +4,7 @@ from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import optimizers
 
-from functions_data_processing import process_data
+from functions_data_processing import process_data_scaled
 from functions_model_evaluation import validate_model
 
 import os
@@ -33,7 +33,7 @@ for category in categories:
     # print(f"\n▶️ Training model for category: {category}")
 
     # Load and process data
-    X_train_scaled, X_val_scaled, _, y_train_scaled, y_val_scaled, scaler_y = process_data(data_set, category, time_span = time_steps)
+    X_train_scaled, X_val_scaled, _, y_train_scaled, y_val_scaled, scaler_y = process_data_scaled(data_set, category, time_span = time_steps)
 
     # Reshape data to format the model wants
     if hasattr(X_train_scaled, 'to_numpy'):
