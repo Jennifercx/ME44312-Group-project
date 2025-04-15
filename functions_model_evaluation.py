@@ -59,19 +59,18 @@ def plot_widget(y_true, y_pred, name = 'Widget'):
     Widget.plot_categories()
     print(Widget.EvaluateResults())
 
-def validate_model(model, X_val_scaled, y_val_scaled, scaler_y):
+def validate_model(model, X_validate_scaled, y_test, scaler_y):
 
     # 1. predict data
-    y_pred = model.predict(X_val_scaled)
+    y_pred = model.predict(X_validate_scaled)
     y_pred = scaler_y.inverse_transform(np.array(y_pred).reshape(-1,1)) # Reverse transformation
-    y_true = scaler_y.inverse_transform(y_val_scaled) # Reverse transformation for actual values
 
     # 2. Evaluate model
-    mae = mean_absolute_error(y_true, y_pred)
-    mse = mean_squared_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
 
-    return y_pred, y_true, mae, mse, r2
+    return y_pred, y_test, mae, mse, r2
 
     # === INTERACTIVE WIDGET VISUALIZATION ===
 

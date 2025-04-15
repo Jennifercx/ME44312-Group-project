@@ -5,13 +5,17 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from pmdarima import auto_arima
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import os
-from functions_data_processing import process_data
+from functions_data_processing import generate_X_y, split_data
 
 warnings.filterwarnings("ignore")
 
 # Parameters
-time_steps = 1
-output_name = 'price'
+time_steps = 1 # Number of weeks used to predict next weeks data
+total_weeks = 86 # Total number of weeks of data
+training_percentage = 0.80
+output_name = 'price' #Name of the output feature
+
+# The categories list for which product type a model should be created
 # categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
 categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
 model_name = 'ARIMA'
@@ -30,12 +34,17 @@ error_metrics = {}
 for category in categories:
 
     # Load and process data
-    X_train_scaled, X_val_scaled, _, y_train_scaled, y_val_scaled, scaler_y = process_data(data_set, category, time_span = time_steps)
+    X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
+
+    # Create train, validate, and test data sets
+    training_weeks = int(training_percentage * total_weeks)
+    X_train, X_test = split_data(X, training_weeks)
+    y_train, y_test = split_data(y, training_weeks)
 
     # Use auto_arima with exogenous regressors on the training data to select orders
     auto_model = auto_arima(
-        y_train_scaled,
-        exogenous=X_train_scaled,
+        y_train,
+        exogenous=X_train,
         seasonal=True,
         m=12,  # Adjust seasonal period if needed
         error_action='ignore',
@@ -46,8 +55,8 @@ for category in categories:
     
     # Fit SARIMAX model with exogenous regressors using training data
     model = SARIMAX(
-        y_train_scaled,
-        exog=X_train_scaled,
+        y_train,
+        exog=X_train,
         order=order,
         seasonal_order=seasonal_order,
         enforce_stationarity=False,
@@ -56,19 +65,15 @@ for category in categories:
     model_fit = model.fit(disp=False)
     
     # Forecast on the test period (using corresponding exogenous values)
-    y_pred_scaled = model_fit.forecast(steps=len(y_val_scaled), exog=X_val_scaled)
-    
-    # Calculate error metrics using the actual test data
-    y_pred = scaler_y.inverse_transform(np.array(y_pred_scaled).reshape(-1,1))
-    y_true = scaler_y.inverse_transform(np.array(y_val_scaled).reshape(-1,1))
+    y_pred = model_fit.forecast(steps=len(y_test), exog=X_test)
 
-    mse = mean_squared_error(y_true, y_pred)
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
     error_metrics[category] = {'mse': mse, 'mae': mae, 'r2': r2}
     
     y_pred_all[category] = y_pred
-    y_true_all[category] = y_true
+    y_true_all[category] = y_test
 
 # Store error metrics
 temp_df = pd.DataFrame(error_metrics)
