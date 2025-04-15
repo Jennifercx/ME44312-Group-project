@@ -1,19 +1,24 @@
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
-from functions_data_processing import process_data_scaled
+from functions_data_processing import generate_X_y, split_data, scale_data
 from functions_model_evaluation import validate_model
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 import os
 import pandas as pd
 import numpy as np
 
 # Parameters
-time_steps = 2
-output_name = 'price'
+time_steps = 1 # Number of weeks used to predict next weeks data
+training_percentage = 0.9
+output_name = 'price' #Name of the output feature
+
+# The categories list for which product type a model should be created
 # categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
-product_categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
-model_name = 'RF'
+categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
 
 # Paths
+model_name = 'RF' # To store the output name under
 data_path = os.path.join(os.getcwd(), "data/processed_data/processed_dataset.csv")
 data_set = pd.read_csv(data_path)
 os.makedirs("results", exist_ok=True)
@@ -26,14 +31,19 @@ histories = {}
 error_metrics = {}
 
 # Extract only the columns for the current category (assume naming like 'category_1_feature1', etc.)
-for category in product_categories:
+for category in categories:
 
-    # Scale and reshape data
-    X_train_scaled, X_val_scaled, scaler_X, y_train_scaled, y_val_scaled, scaler_y = process_data_scaled(data_set, category, time_span = time_steps)
-    
+    # Load and process data
+    X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
+
+    # Create train, validate, and test data sets
+    training_weeks = int(training_percentage * len(X))
+    X_train, X_test = split_data(X, training_weeks)
+    y_train, y_test  = split_data(y, training_weeks)
+
     # Reshape data to format the model wants
-    y_train_scaled = np.ravel(y_train_scaled)
-    y_val_scaled = np.ravel(y_val_scaled)
+    y_train = np.ravel(y_train)
+    y_test  = np.ravel(y_test )
 
     # Train model
     base_model = RandomForestRegressor(random_state=42)
@@ -49,22 +59,27 @@ for category in product_categories:
         cv=3, scoring='neg_mean_absolute_error',
         n_jobs=-1, return_train_score=True
     )
-    grid_search.fit(X_val_scaled, y_val_scaled)
+    grid_search.fit(X_train, y_train)
 
     # Store "history" from grid search results
     history_df = pd.DataFrame(grid_search.cv_results_)
 
     # Train final model using best params
     best_model = grid_search.best_estimator_
-    best_model.fit(X_train_scaled, y_train_scaled)
+    best_model.fit(X_train, y_train)
 
-    # Validate model
-    y_pred, y_true, mae, mse, r2 = validate_model(best_model, X_val_scaled, y_val_scaled.reshape(-1, 1), scaler_y)
+    # Test model
+    y_pred = best_model.predict(X_test)
 
-    # Store validation data
+    # 2. Evaluate model
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    # Store test data
     error_metrics[category] = {'mse': mse, 'mae': mae, 'r2': r2}
     y_pred_all[category] = y_pred
-    y_true_all[category] = y_true
+    y_true_all[category] = y_test
     histories[category] = history_df
     
 # Store error metrics

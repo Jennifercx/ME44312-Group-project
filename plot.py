@@ -11,7 +11,7 @@ result_path = os.path.join(os.getcwd(), "results")
 # input parameters
 output_name = 'price'
 categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
-model = 'LSTM'
+model = 'ARIMA'
 
 # plot parameters
 y_pred = pd.read_csv(os.path.join(result_path, model + '_y_pred.csv'))

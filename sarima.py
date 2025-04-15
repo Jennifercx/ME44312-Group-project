@@ -11,8 +11,7 @@ warnings.filterwarnings("ignore")
 
 # Parameters
 time_steps = 1 # Number of weeks used to predict next weeks data
-total_weeks = 86 # Total number of weeks of data
-training_percentage = 0.80
+training_percentage = 0.90
 output_name = 'price' #Name of the output feature
 
 # The categories list for which product type a model should be created
@@ -37,7 +36,7 @@ for category in categories:
     X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
 
     # Create train, validate, and test data sets
-    training_weeks = int(training_percentage * total_weeks)
+    training_weeks = int(training_percentage * len(X))
     X_train, X_test = split_data(X, training_weeks)
     y_train, y_test = split_data(y, training_weeks)
 

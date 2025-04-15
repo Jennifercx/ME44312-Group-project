@@ -109,7 +109,7 @@ error_indices = ['mae', 'mse', 'r2']
 # Note: Uncomment the models you want to include in the plot
 model_dfs = {
     'LSTM': df_LSTM,
-    #'RF': df_RF,
+    'RF': df_RF,
     'ARIMA': df_ARIMA,
     #'GB': df_GB
 }

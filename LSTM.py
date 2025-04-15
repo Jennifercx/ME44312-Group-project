@@ -11,8 +11,7 @@ import os
 import pandas as pd
 
 # Parameters
-time_steps = 2 # Number of weeks used to predict next weeks data
-total_weeks = 86 # Total number of weeks of data
+time_steps = 1 # Number of weeks used to predict next weeks data
 training_percentage = 0.8
 validation_percentage = 0.5 # what percentage of the validation/testing data should be use for validation
 output_name = 'price' #Name of the output feature
@@ -41,11 +40,11 @@ for category in categories:
     X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
 
     # Create train, validate, and test data sets
-    training_weeks = int(training_percentage * total_weeks)
+    training_weeks = int(training_percentage * len(X))
     X_train, X_validate = split_data(X, training_weeks)
     y_train, y_validate = split_data(y, training_weeks)
 
-    validation_weeks = int(validation_percentage * (total_weeks - training_weeks))
+    validation_weeks = int(validation_percentage * (len(X) - training_weeks))
     X_validate, X_test = split_data(X_validate, validation_weeks)
     y_validate, y_test = split_data(y_validate, validation_weeks)
 
