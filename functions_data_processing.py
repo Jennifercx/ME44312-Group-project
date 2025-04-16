@@ -27,10 +27,12 @@ def generate_X_y(df, category, time_span = 1, output = "items"):
     # 2. Create input and target vectors
     X = []
     y = []
+
+    # Here y is a shifted version of data_set such that X[0] is week 1 and y[0] is week 2, if time_span = 1
     for i in range(time_span, len(df) - 1): # -1 is to shift the data between train and validation/test data
         X.append(input_cols.iloc[i - time_span:i].values)
         y.append(output_cols.iloc[i + 1].values) # 1 is to select the test as next week
-    
+
     # make X and y 2D
     X = np.array(X)
     X = X.reshape(X.shape[0], -1)

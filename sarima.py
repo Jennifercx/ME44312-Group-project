@@ -17,7 +17,7 @@ output_name = 'price' #Name of the output feature
 # The categories list for which product type a model should be created
 # categories = ["automotive", "baby", "beauty_health", "electronics", "entertainment", "fashion", "food", "furniture", "home", "miscellaneous", "office_supplies", "pets", "sports", "tools", "toys"]
 categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
-model_name = 'ARIMA'
+model_name = 'SARIMAX'
 
 # Paths
 data_path = os.path.join(os.getcwd(), "data/processed_data/processed_dataset.csv")
@@ -34,12 +34,12 @@ for category in categories:
 
     # Load and process data
     X, y = generate_X_y(data_set, category, time_span = time_steps, output = output_name)
-    # print(X[:,0])
+
     # Create train, validate, and test data sets
     training_weeks = int(training_percentage * len(X))
     X_train, X_test = split_data(X, training_weeks)
     y_train, y_test = split_data(y, training_weeks)
-    
+
     # Use auto_arima with exogenous regressors on the training data to select orders
     auto_model = auto_arima(
         y_train,
@@ -81,7 +81,7 @@ temp_df.to_csv(file_path_metrics, index=False)
 
 # Store y_pred metrics
 temp_df = pd.DataFrame({
-    category: preds.ravel()
+    category: preds
     for category, preds in y_pred_all.items()
 })
 file_path_metrics = os.path.join(result_path, model_name + "_y_pred.csv")
@@ -89,8 +89,8 @@ temp_df.to_csv(file_path_metrics, index=False)
 
 # Store y_true metrics
 temp_df = pd.DataFrame({
-    category: preds.ravel()
-    for category, preds in y_true_all.items()
+    category: np.atleast_1d(true).ravel()
+    for category, true in y_true_all.items()
 })
 file_path_metrics = os.path.join(result_path, model_name + "_y_true.csv")
 temp_df.to_csv(file_path_metrics, index=False)

@@ -5,9 +5,9 @@ from matplotlib import pyplot as plt
 from matplotlib import colormaps
 
 # Choose m
-selected_models = [ 'LSTM', 'ARIMA']
-selected_error = 'mse'
-fig_name = 'mse.png'
+selected_models = [ 'LSTM', 'SARIMAX']
+selected_error = 'r2'
+fig_name = 'r2.png'
 path = os.path.join(os.getcwd(), "figures/" + fig_name)
 
 cmap = plt.get_cmap('viridis')  # Get the Viridis colormap
@@ -18,7 +18,7 @@ colors = [cmap(i / (len(selected_models))) for i in range(len(selected_models))]
 result_path = os.path.join(os.getcwd(), "results")
 df_LSTM = pd.read_csv(os.path.join(result_path, 'LSTM_error_metrics.csv'))
 df_RF = pd.read_csv(os.path.join(result_path, 'RF_error_metrics.csv'))
-df_ARIMA = pd.read_csv(os.path.join(result_path, 'ARIMA_error_metrics.csv'))
+df_SARIMAX = pd.read_csv(os.path.join(result_path, 'SARIMAX_error_metrics.csv'))
 df_GB = pd.read_csv(os.path.join(result_path, 'GB_error_metrics.csv'))
 
 
@@ -39,7 +39,7 @@ error_index_map = {
 model_dfs = {
     'LSTM': df_LSTM,
     'RF': df_RF,
-    'ARIMA': df_ARIMA,
+    'SARIMAX': df_SARIMAX,
     #'GB': df_GB
 }
 
@@ -72,4 +72,3 @@ plt.title(f'{selected_error.upper()} for Selected Models Across Categories')
 plt.legend()
 plt.savefig(path)
 plt.show()
-

@@ -10,6 +10,8 @@ from pmdarima import auto_arima
 
 warnings.filterwarnings("ignore")
 
+categories = ["bed_bath_table", "health_beauty", "sports_leisure", "furniture_decor", "computers_accessories"]
+
 # 1. Load datasets: training and testing
 train_path = os.path.join(os.getcwd() + "/data/processed_data", "train_data.csv")
 test_path  = os.path.join(os.getcwd() + "/data/processed_data", "test_data.csv")
@@ -34,9 +36,10 @@ results = {}       # Will store results for each price column
 error_metrics = {}  # Store error metrics for each price column
 
 # Process each price column with additional exogenous regressors
-for col in price_cols:
+for col in categories:
     # Derive prefix to identify matching exogenous columns
-    prefix = col.replace('_price', '')
+    prefix = col
+    col = col + '_price'
     exog_suffixes = ['_items', '_freight', '_review', '_shipping']
     # Ensure the exogenous columns exist in both train and test datasets
     exog_cols = [prefix + suffix for suffix in exog_suffixes 
@@ -47,14 +50,14 @@ for col in price_cols:
     train_df = df_train.sort_values('week').reset_index(drop=True)
     test_df  = df_test.sort_values('week').reset_index(drop=True)
     
-    train_ts = train_df[col]
-    test_ts  = test_df[col]
+    train_ts = train_df[col].shift(-1).iloc[:-1].reset_index(drop=True)
+    test_ts  = test_df[col].shift(-1).iloc[:-1].reset_index(drop=True)
     weeks_test = test_df['week']
     
     # Extract exogenous variables if available
     if exog_cols:
-        exog_train = train_df[exog_cols]
-        exog_test  = test_df[exog_cols]
+        exog_train = train_df[exog_cols].iloc[:-1].reset_index(drop=True)
+        exog_test  = test_df[exog_cols].iloc[:-1].reset_index(drop=True)
     else:
         exog_train = None
         exog_test  = None
@@ -94,6 +97,7 @@ for col in price_cols:
     mse = mean_squared_error(test_ts, forecast)
     mae = mean_absolute_error(test_ts, forecast)
     r2 = r2_score(test_ts, forecast)
+    print(r2)
     error_metrics[col] = {'mse': mse, 'mae': mae, 'r2': r2}
     
     # Save results for later use
